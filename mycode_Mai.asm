@@ -1,55 +1,22 @@
 .model small
 .stack 100h
 .data
-    mapa_1 db 0, 1, 0, 0, 0, 0
-           db 0, 1, 0, 1, 1, 1
-           db 0, 1, 0, 0, 0, 0
-           db 0, 1, 0, 1, 0, 0
-           db 0, 1, 0, 1, 0, 0
-           db 0, 0, 0, 1, 0, 0       
+    mapa_1 dw 4131h, 4231h, 4331h, 4431h, 4531h, 4631h
+           dw 4132h, 4232h, 4332h, 4432h, 4532h, 4632h
+           dw 4133h, 4233h, 4333h, 4433h, 4533h, 4633h
+           dw 4134h, 4234h, 4334h, 4434h, 4534h, 4634h
+           dw 4135h, 4235h, 4335h, 4435h, 4535h, 4635h
+           dw 4136h, 4236h, 4336h, 4436h, 4536h, 4636h       
+    newline db 0Dh, 0Ah, '$'
     
-    mapa_2 db 0, 0, 1, 0, 0, 0
-           db 0, 0, 1, 0, 0, 0
-           db 0, 0, 1, 1, 1, 1
-           db 1, 0, 1, 0, 0, 0
-           db 1, 0, 1, 0, 0, 0
-           db 1, 0, 0, 0, 0, 0 
-           
-    mapa_3 db 1, 1, 1, 1, 1, 0
-           db 0, 0, 0, 0, 0, 0
-           db 0, 0, 0, 0, 0, 0
-           db 1, 0, 1, 1, 1, 0
-           db 1, 0, 0, 0, 0, 0
-           db 1, 0, 0, 0, 0, 0 
+    navios dw 4434h, 4435h, 4436h, 4432h, 4532h, 4632h, 4231h, 4232h, 4233h, 4234h, 4235h
     
-    mapa_4 db 0, 1, 1, 1, 0, 0
-           db 1, 0, 0, 0, 0, 0
-           db 1, 0, 0, 0, 0, 0
-           db 1, 0, 0, 0, 0, 0
-           db 0, 1, 1, 1, 1, 1
-           db 0, 0, 0, 0, 0, 0 
-    
-    mapa_5 db 0, 0, 0, 0, 0, 0
-           db 0, 0, 0, 0, 0, 0
-           db 0, 0, 0, 0, 0, 0
-           db 0, 0, 0, 0, 0, 0
-           db 0, 0, 0, 0, 0, 0
-           db 0, 0, 0, 0, 0, 0 
-    
-    mapa_6 db 0, 0, 0, 0, 0, 1
-           db 0, 1, 1, 1, 0, 1
-           db 0, 0, 0, 0, 0, 1
-           db 0, 0, 0, 0, 0, 1
-           db 1, 1, 1, 0, 0, 1
-           db 0, 0, 0, 0, 0, 0 
-    
-    mapa_7 db 0, 0, 0, 0, 0, 0
-           db 0, 0, 0, 0, 0, 0
-           db 1, 1, 1, 1, 1, 0
-           db 0, 1, 0, 0, 0, 0
-           db 0, 1, 0, 0, 0, 0
-           db 0, 1, 0, 1, 1, 1 
-    newline db 13, 10, '$'
+    mapa_print db 6 dup(?)
+               db 6 dup(?)
+               db 6 dup(?)
+               db 6 dup(?)
+               db 6 dup(?)
+               db 6 dup(?)
     
 .code
 start:
@@ -57,24 +24,43 @@ start:
     mov ds, ax
     mov es, ax
     
-    lea si, mapa_1
+    ;inicializar el puntero al mapa a imprimir
+    lea si, mapa_print
     
-    mov cx, 8
+    ;recorrer el mapa_1
+    lea di, mapa_1
+    mov cx, 6; #filas
+    mov bx, 6; #columnas
     
 fila_loop:
-    push cx
-    
-    mov cx, 8
+    push cx 
+    mov cx, bx   ; número de columnas
 
-columna_loop:
-    mov al, [si]
-    add al, 030h
-    call print_char
+columna_loop: 
+    push cx
+    mov dx, [di]; cargar el valor de mapa_1
+    push di     ; guarda la direccion de mapa_1
+    lea di, navios
+    mov cx, 11; numeros de elementos en navios
     
-    mov al, ' '
-    call print_char
+navio_loop:
+    cmp dx, [di]
+    je encontrado
+    add di, 2
+    loop navio_loop
     
+    ;no encontrado en navios
+    mov [si], 0
+    jmp siguiente
+
+encontrado:
+    mov [si], 1
+    
+siguiente:
+    pop di
+    add di, 2
     inc si
+    pop cx
     loop columna_loop
     
     lea dx, newline
@@ -84,30 +70,36 @@ columna_loop:
     pop cx
     loop fila_loop
     
-    mov ax, 4C00h
-    int 21h
+    ;imprimir mapa_print
+    lea si, mapa_print
+    mov cx, 6
+
+imprimir_fila_loop:
+    push cx
+    mov cx, 6
     
-print_char:
+imprimir_columna_loop:
+    mov al, [si]
+    add al, 30h   ; convertir el número a su equivalente ASCII
+    mov dl, al
     mov ah, 02h
     int 21h
-    ret
-end start    
 
+    mov dl, ' '
+    mov ah, 02h
+    int 21h
 
+    inc si
+    loop imprimir_columna_loop
 
+    lea dx, newline
+    mov ah, 09h
+    int 21h
 
+    pop cx
+    loop imprimir_fila_loop
 
+    mov ax, 4C00h
+    int 21h
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+end start
