@@ -1,16 +1,33 @@
 .model small
 .stack 100h
-.data
+.data  
+    ; NO TOCAR
     mapa_1 dw 4131h, 4231h, 4331h, 4431h, 4531h, 4631h
            dw 4132h, 4232h, 4332h, 4432h, 4532h, 4632h
            dw 4133h, 4233h, 4333h, 4433h, 4533h, 4633h
            dw 4134h, 4234h, 4334h, 4434h, 4534h, 4634h
            dw 4135h, 4235h, 4335h, 4435h, 4535h, 4635h
-           dw 4136h, 4236h, 4336h, 4436h, 4536h, 4636h       
-    newline db 0Dh, 0Ah, '$'
+           dw 4136h, 4236h, 4336h, 4436h, 4536h, 4636h   
+               
+    newline db 0Dh, 0Ah, '$'    
     
-    navios dw 4434h, 4435h, 4436h, 4432h, 4532h, 4632h, 4231h, 4232h, 4233h, 4234h, 4235h
+    ; NO TOCAR
+    navio_1 dw 4434h, 4435h, 4436h, 4432h, 4532h, 4632h, 4231h, 4232h, 4233h, 4234h, 4235h
     
+    navio_2 dw 4132h, 4133h, 4134h, 4333h, 4433h, 4533h, 4236h, 4336h, 4436h, 4536h, 4636h
+    
+    navio_3 dw 4531h, 4532h, 4533h, 4634h, 4635h, 4636h, 4134h, 4234h, 4334h, 4434h, 4534h
+    
+    navio_4 dw 4132h, 4232h, 4332h, 4234h, 4235h, 4236h, 4431h, 4432h, 4433h, 4434h, 4434h
+    
+    navio_5 dw 4236h, 4336h, 4436h, 4533h, 4534h, 4535h, 4131h, 4231h, 4331h, 4431h, 4531h
+    
+    navio_6 dw 4231h, 4232h, 4233h, 4433h, 4434h, 4435h, 4631h, 4632h, 4633h, 4634h, 4635h
+    
+    navio_7 dw 4435h, 4535h, 4635h, 4234h, 4235h, 4236h, 4133h, 4233h, 4333h, 4433h, 4533h
+    
+    navio dw 11 dup(?)
+       
     mapa_print db 6 dup(?)
                db 6 dup(?)
                db 6 dup(?)
@@ -40,7 +57,7 @@ columna_loop:
     push cx
     mov dx, [di]; cargar el valor de mapa_1
     push di     ; guarda la direccion de mapa_1
-    lea di, navios
+    lea di, navio_7
     mov cx, 11; numeros de elementos en navios
     
 navio_loop:
