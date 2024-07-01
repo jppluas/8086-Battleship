@@ -2,21 +2,20 @@
 .stack 100h
 .data
 msg_misil db 0Dh, 0Ah,'Misil $'
-msg_misil_2 db ', ingrese la celda a atacar: $'   
-msg_correcto db 0Dh, 0Ah, 'Correcto$'   
-msg_incorrecto db 0Dh, 0Ah, 'Incorrecto, intente de nuevo$'
+msg_misil_2 db ', ingrese la celda a atacar: $'      
+msg_incorrecto db 0Dh, 0Ah, 'Ingrese una celda valida (Columna A-F y Fila 1-6)$'
 msg_victoria db 0Dh, 0Ah,'Ganaste!$'
 msg_derrota db 0Dh, 0Ah,'Mejor suerte para la proxima!$'
-msg_ataque_confirmado db '................Impacto confirmado$'
-msg_ataque_fallido db '................Sin impacto$'
+msg_ataque_confirmado db '..........Impacto confirmado$'
+msg_ataque_fallido db '..........Sin impacto$'
 msg_submarino db ';Submarino hundido$'  
 msg_destructor db ';Destructor hundido$'
 msg_portaviones db ';Portaviones hundido$'
-msg_ataque_repetido db '................Ya impactado, intente de nuevo$'
+msg_ataque_repetido db '..........Ya impactado, intente de nuevo$'
 fila db ?
 columna db ? 
-celda_ingresada db ?
-mapa_prueba db 072h,073h,074h,075h,076h,077h,078h,079h,07ah,07bh,07ch
+celda_ingresada dw ?
+mapa_prueba dw 04131h,04132h,04133h, 04134h,04135h,04136h, 04231h,04232h,04233h,04234h,04235h
 ataques_prueba db 0,0,0,0,0,0,0,0,0,0,0 
 mapa_size db 11
 barco_1 db 1 
@@ -77,9 +76,10 @@ main proc
         
         
     correcto:
-        mov dl, columna
+        mov dx, 00000h
+        mov dh, columna
         add dl, fila
-        mov celda_ingresada, dl        ; obtener el valor total de la celda
+        mov celda_ingresada, dx        ; obtener el valor total de la celda
 ;        lea dx, msg_correcto
 ;        mov ah, 09h
 ;        int 21h              ; mostrar mensaje de correcto
@@ -97,8 +97,10 @@ main proc
         mov bh, mapa_size 
     
     comparar: 
-        cmp bh, 0
-        jz rechazar_ataque
+        cmp bh, 00h
+        jz rechazar_ataque  
+        
+        mov ax, [si]
         
         cmp [si], dx
         dec bh
@@ -113,12 +115,12 @@ main proc
         jmp comparar          
     
     verif:
-        cmp [di], 1
+        cmp [di], 01h
         jz omitir_ataque
         jnz ataque
     
     ataque:
-        mov [di], 1
+        mov [di], 01h
         jmp confirmar_ataque
        
     pre_verif_barcos_1:
@@ -128,11 +130,11 @@ main proc
         jnz pre_verif_barcos_2
     
     lup_1:
-        cmp [di], 1 
+        cmp [di], 01h 
         jnz pre_verif_barcos_2
         inc di
         dec bl
-        cmp bl, 0
+        cmp bl, 00h
         jnz lup_1
         
         lea dx, msg_submarino
@@ -151,11 +153,11 @@ main proc
         jnz pre_verif_barcos_3
      
      lup_2:
-        cmp [di], 1 
+        cmp [di], 01h 
         jnz pre_verif_barcos_3
         inc di
         dec bl
-        cmp bl, 0
+        cmp bl, 00h
         jnz lup_2
         
         lea dx, msg_destructor
@@ -169,15 +171,15 @@ main proc
         mov di, offset ataques_prueba 
         mov barco_size, 5
         add di, 6
-        cmp barco_3, 1
+        cmp barco_3, 01h
         jnz victoria 
         
     lup_3:
-        cmp [di], 1 
+        cmp [di], 01h 
         jnz ingreso
         inc di
         dec bl
-        cmp bl, 0
+        cmp bl, 00h
         jnz lup_3
         
         lea dx, msg_portaviones
@@ -185,11 +187,8 @@ main proc
         int 21h
         cmp ch, 18
         jnz ingreso
-        jz derrota 
+        jz derrota     
         
-        
-        
-    
     victoria:
         lea dx, msg_victoria
         mov ah, 09h
