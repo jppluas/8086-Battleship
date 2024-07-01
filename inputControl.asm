@@ -28,18 +28,47 @@ num dw 0
 main proc
     mov ax, @data
     mov ds, ax
-    mov ch, 1
+    mov ch, 1   ; inicializamos el numero de intento 
 
     ; Mostrar el mensaje     
     ingreso:
+        mov cl, 00h
         lea dx, msg_misil
         mov ah, 09h
-        int 21h 
+        int 21h
+        mov ah, 00h
+        mov al, ch
         
-        mov dl, ch
-        add dl, 030h
-        mov ah, 02h
-        int 21h 
+    convertir:
+        mov bl, 10   ;mueve 10 a bl
+        div bl       ;divide el contenido de ax para 10, el cociente se guarda en al y el residuo en ah
+        mov dh, ah   ;mueve el contenido de ah a dh  
+        mov dl, al   ;guarda el contenido de al en dl
+        mov ah, 00h  ;guarda 0 en ah
+        mov al, dh   ;mueve el contenido de dh a al
+        push ax      ;guarda el contenido de ax en la pila
+        mov ax, 0000h;guarda 0 en ax   
+        mov al, dl   ;guarda el cociente de la division en al
+        add cl, 1
+        cmp dl, 0    ;verifica si el cociente es 0
+        jnz convertir;si no se cumple lo anterior regresa a la etiqueta convertir
+        mov ah, 02h  ;esta linea y las 2 siguientes son para dejar un espacio entre cada numero
+        mov dl, 0h
+        int 21h
+        jz  mostrar  ;si dl es igual a 0 salta a la etiqueta mostrar
+                               
+    mostrar:
+        sub cl, 1    ;decrementa cx en 1
+        pop ax       ;retira el ultimo valor ingresado en la pila y lo guarda en ax
+        mov ah, 02h  ;se coloca 02h en ah (funcion)
+        mov dl, al   ;se guarda el contenido de al en dl
+        add dl, 30h  ;se suma 30h a dl para obtener el caracter ascii correcto
+        int 21h      ;se llama a interrupcion 21h para mostrar el caracter por pantalla
+        cmp cl, 0    ;verifica si el contador llego a 0
+        jnz mostrar  ;si lo anterior no se cumple, salta a la etiqueta mostrar
+        mov ah,00h 
+        
+        
         
         lea dx, msg_misil_2
         mov ah, 09h
@@ -72,7 +101,13 @@ main proc
         cmp fila, 36h
         ja incorrecto 
         
-        jmp correcto   
+        jmp correcto  
+        
+    incorrecto:
+        lea dx, msg_incorrecto
+        mov ah, 09h
+        int 21h
+        jmp ingreso   
         
         
     correcto:
@@ -80,37 +115,27 @@ main proc
         mov dh, columna
         add dl, fila
         mov celda_ingresada, dx        ; obtener el valor total de la celda
-;        lea dx, msg_correcto
-;        mov ah, 09h
-;        int 21h              ; mostrar mensaje de correcto
-        jmp verificar_ataque
-    
-    incorrecto:
-        lea dx, msg_incorrecto
-        mov ah, 09h
-        int 21h
-        jmp ingreso     
-    
+
     verificar_ataque:
-        mov si, offset mapa_prueba
-        mov di, offset ataques_prueba
+        mov si, offset mapa_prueba     ; inicializar indice para recorrer el array de navios
+        mov di, offset ataques_prueba  ; inicializar indice para recorrer el array de ataques
         mov bh, mapa_size 
     
     comparar: 
         cmp bh, 00h
         jz rechazar_ataque  
-        
+        dec bh
         mov ax, [si]
         
         cmp [si], dx
-        dec bh
+        
         jz verif
         jnz control_indices
         
         jmp rechazar_ataque    
     
     control_indices:
-        inc si
+        add si,2
         inc di
         jmp comparar          
     
@@ -126,7 +151,8 @@ main proc
     pre_verif_barcos_1:
         mov di, offset ataques_prueba
         mov barco_size, 3
-        cmp barco_1, 1
+        mov bl, barco_size
+        cmp barco_1, 01h
         jnz pre_verif_barcos_2
     
     lup_1:
@@ -134,22 +160,23 @@ main proc
         jnz pre_verif_barcos_2
         inc di
         dec bl
-        cmp bl, 00h
+        cmp bl, 00h            
         jnz lup_1
         
+        mov barco_1, bl
         lea dx, msg_submarino
         mov ah, 09h
-        int 21h
-        cmp ch, 18
-        jnz ingreso
-        jz derrota
+        int 21h 
+        
+        jmp verif_victoria_1
+        
         
      pre_verif_barcos_2:
         mov di, offset ataques_prueba 
         mov barco_size, 3
         mov bl, barco_size
         add di, 3
-        cmp barco_2, 1
+        cmp barco_2, 01h
         jnz pre_verif_barcos_3
      
      lup_2:
@@ -160,19 +187,21 @@ main proc
         cmp bl, 00h
         jnz lup_2
         
+        mov barco_2, 00h
         lea dx, msg_destructor
         mov ah, 09h
         int 21h
-        cmp ch, 18
-        jnz ingreso
-        jz derrota 
+        
+        jmp verif_victoria_1
+         
         
     pre_verif_barcos_3:
         mov di, offset ataques_prueba 
         mov barco_size, 5
+        mov bl, barco_size
         add di, 6
         cmp barco_3, 01h
-        jnz victoria 
+        jnz verif_victoria_1 
         
     lup_3:
         cmp [di], 01h 
@@ -182,39 +211,58 @@ main proc
         cmp bl, 00h
         jnz lup_3
         
+        mov barco_3, 00h
         lea dx, msg_portaviones
         mov ah, 09h
         int 21h
-        cmp ch, 18
-        jnz ingreso
-        jz derrota     
         
+    
+    verif_victoria_1:
+        cmp barco_1, 00h
+        jz verif_victoria_2
+        jnz ingreso
+         
+    verif_victoria_2:
+        cmp barco_2, 00h
+        jz verif_victoria_3
+        jnz ingreso
+        
+    verif_victoria_3:
+        cmp barco_3, 00h
+        jnz ingreso 
+    
     victoria:
         lea dx, msg_victoria
         mov ah, 09h
-        int 21h     
+        int 21h
+        jmp exit     
     
     derrota:
         lea dx, msg_derrota
         mov ah, 09h
-        int 21h 
-    
-    fin:
-                   
+        int 21h
+        jmp exit        
         
     rechazar_ataque:
         inc ch
         lea dx, msg_ataque_fallido
         mov ah, 09h
         int 21h
-        jmp ingreso        
+        
+        cmp ch, 19
+        jz derrota
+        jnz ingreso                       
               
     confirmar_ataque:
         inc ch
         lea dx, msg_ataque_confirmado
         mov ah, 09h
         int 21h
-        jmp ingreso
+        
+        
+        cmp ch, 19
+        jz derrota           
+        jnz  pre_verif_barcos_1
         
         
     omitir_ataque:
@@ -222,5 +270,7 @@ main proc
         mov ah, 09h
         int 21h
         jmp ingreso
+          
+    
     
     exit:
