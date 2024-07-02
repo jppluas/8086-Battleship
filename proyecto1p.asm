@@ -39,7 +39,7 @@
                
     newline db 0Dh, 0Ah, '$'
     
-    mensaje_cargando db 'Cargando...', 0Dh, 0Ah, '$'    
+    mensaje_cargando db 0Dh, 0Ah, 'Cargando...', 0Dh, 0Ah, '$'    
     
     ; NO TOCAR
     navio_1 dw 4434h, 4435h, 4436h, 4432h, 4532h, 4632h, 4231h, 4232h, 4233h, 4234h, 4235h
@@ -59,8 +59,9 @@
                db 6 dup(?)
                db 6 dup(?) 
                
-    encabezado_col db '  A B C D E F', 0Dh, 0Ah, '$'
-               
+    encabezado_col db 0Dh, 0Ah,'  A B C D E F', 0Dh, 0Ah, '$' 
+    juego db 0Dh, 0Ah,'BATALLA NAVAL', '$'
+    condicion db db 0Dh, 0Ah,'Tienes 18 misiles para destruit la flota enemiga', '$'           
 
 .code
 main proc
@@ -72,7 +73,15 @@ main proc
 ; ----------------------------- UBICACION ALEATORIA DE BARCOS --------------------------------------
 ; --------------------------------------------------------------------------------------------------    
     
-    start:
+    start:    
+    lea dx, juego
+    mov ah, 09h
+    int 21h 
+    
+    lea dx, condicion
+    mov ah, 09h
+    int 21h 
+    
     lea dx, mensaje_cargando 
     mov ah, 09h
     int 21h
@@ -120,17 +129,15 @@ main proc
         loop columna_loop
         
         pop cx
-        loop fila_loop
+        loop fila_loop       
         
         lea dx, encabezado_col
         mov ah, 09h
         int 21h
         
-        ; imprimir mapa_print
+        ; imprimir mapa_print con '*'
         lea si, mapa_print
         mov cx, 6
-          
-        
     
     imprimir_fila_loop:        
         mov dh, n_fila
@@ -149,8 +156,7 @@ main proc
         mov cx, 6
         
     imprimir_columna_loop:
-        mov al, [si]
-        add al, 30h   ; convertir el número a su equivalente ASCII
+        mov al, '*'
         mov dl, al
         mov ah, 02h
         int 21h
@@ -221,7 +227,6 @@ main proc
     
     copiar_navio_6:
         lea si, navio_6
-        jmp copiar
     
     copiar_navio_7:
         lea si, navio_7
@@ -458,12 +463,106 @@ main proc
         lea dx, msg_victoria
         mov ah, 09h
         int 21h
+
+        ; Mostrar la tabla completa al final
+        lea dx, encabezado_col
+        mov ah, 09h
+        int 21h
+        
+        ; imprimir mapa_print
+        lea si, mapa_print
+        mov cx, 6
+          
+    imprimir_fila_loop_final:        
+        mov dh, n_fila
+        mov dl, dh        
+        mov ah, 02h
+        int 21h
+        
+        inc n_fila
+        
+              
+        mov dl, ' '
+        mov ah, 02h
+        int 21h
+    
+        push cx
+        mov cx, 6
+        
+    imprimir_columna_loop_final:
+        mov al, [si]
+        add al, 30h   ; convertir el número a su equivalente ASCII
+        mov dl, al
+        mov ah, 02h
+        int 21h
+    
+        mov dl, ' '
+        mov ah, 02h
+        int 21h
+    
+        inc si
+        loop imprimir_columna_loop_final
+    
+        lea dx, newline
+        mov ah, 09h
+        int 21h
+    
+        pop cx
+        loop imprimir_fila_loop_final
+
         jmp exit     
     
     derrota:
         lea dx, msg_derrota
         mov ah, 09h
         int 21h
+
+        ; Mostrar la tabla completa al final
+        lea dx, encabezado_col
+        mov ah, 09h
+        int 21h
+        
+        ; imprimir mapa_print
+        lea si, mapa_print
+        mov cx, 6
+          
+    imprimir_fila_loop_derrota:        
+        mov dh, n_fila
+        mov dl, dh        
+        mov ah, 02h
+        int 21h
+        
+        inc n_fila
+        
+              
+        mov dl, ' '
+        mov ah, 02h
+        int 21h
+    
+        push cx
+        mov cx, 6
+        
+    imprimir_columna_loop_derrota:
+        mov al, [si]
+        add al, 30h   ; convertir el número a su equivalente ASCII
+        mov dl, al
+        mov ah, 02h
+        int 21h
+    
+        mov dl, ' '
+        mov ah, 02h
+        int 21h
+    
+        inc si
+        loop imprimir_columna_loop_derrota
+    
+        lea dx, newline
+        mov ah, 09h
+        int 21h
+    
+        pop cx
+        loop imprimir_fila_loop_derrota
+
         jmp exit        
         
     rechazar_ataque:
@@ -532,4 +631,5 @@ main proc
         mov ax, 4C00h
         int 21h
         
-        
+main endp
+end main
