@@ -1,31 +1,33 @@
 .model small
 .stack 100h
 .data 
-msg_intentar db 0Dh, 0Ah, 0Dh, 0Ah, 'Desea jugar de nuevo? Si(1)/No(0) $'
-msg_misil db 0Dh, 0Ah,'Misil $'
-msg_misil_2 db ', ingrese la celda a atacar: $'      
-msg_incorrecto db 0Dh, 0Ah, 'Ingrese una celda valida (Columna A-F y Fila 1-6)$'
-msg_incorrecto_2 db 0Dh, 0Ah, 'Ingrese una opciOn valida$'
-msg_victoria db 0Dh, 0Ah,'Ganaste! ;)$'
-msg_derrota db 0Dh, 0Ah, 0Dh, 0Ah, 'Mejor suerte para la proxima! ;)$'
-msg_gracias db 0Dh, 0Ah,'Gracias por jugar, vuelve pronto ;)$'
-msg_ataque_confirmado db '..........Impacto confirmado$'
-msg_ataque_fallido db '..........Sin impacto$'
-msg_submarino db ' ; Submarino hundido!$'  
-msg_destructor db ' ; Destructor hundido!$'
-msg_portaviones db ' ; Portaviones hundido!$'
-msg_ataque_repetido db '..........Ya impactado, intente de nuevo$'
-fila db ?
-columna db ? 
-celda_ingresada dw ?
-ataques_prueba db 0,0,0,0,0,0,0,0,0,0,0 
-mapa_size db 11
-barco_1 db 1 
-barco_2 db 1 
-barco_3 db 1
-barco_size db ? 
-num dw 0 
-intentar db ?
+    msg_intentar db 0Dh, 0Ah, 0Dh, 0Ah, 'Desea jugar de nuevo? Si(1)/No(0) $'
+    msg_misil db 0Dh, 0Ah,'Misil $'
+    msg_misil_2 db ', ingrese la celda a atacar: $'      
+    msg_incorrecto db 0Dh, 0Ah, 'Ingrese una celda valida (Columna A-F y Fila 1-6)$'
+    msg_incorrecto_2 db 0Dh, 0Ah, 'Ingrese una opción valida$'
+    msg_victoria db 0Dh, 0Ah,'Ganaste! ;)$'
+    msg_derrota db 0Dh, 0Ah, 0Dh, 0Ah, 'Mejor suerte para la proxima! ;)$'
+    msg_gracias db 0Dh, 0Ah,'Gracias por jugar, vuelve pronto ;)$'
+    msg_ataque_confirmado db '..........Impacto confirmado$'
+    msg_ataque_fallido db '..........Sin impacto$'
+    msg_submarino db ' ; Submarino hundido!$'  
+    msg_destructor db ' ; Destructor hundido!$'
+    msg_portaviones db ' ; Portaviones hundido!$'
+    msg_ataque_repetido db '..........Ya impactado, intente de nuevo$'
+    fila db ?
+    columna db ? 
+    celda_ingresada dw ?
+    ataques_prueba db 0,0,0,0,0,0,0,0,0,0,0 
+    mapa_size db 11
+    barco_1 db 1 
+    barco_2 db 1 
+    barco_3 db 1
+    barco_size db ? 
+    num dw 0 
+    intentar db ?
+    
+    n_fila db 31h
 
     ; NO TOCAR
     mapa_1 dw 4131h, 4231h, 4331h, 4431h, 4531h, 4631h
@@ -35,7 +37,9 @@ intentar db ?
            dw 4135h, 4235h, 4335h, 4435h, 4535h, 4635h
            dw 4136h, 4236h, 4336h, 4436h, 4536h, 4636h   
                
-    newline db 0Dh, 0Ah, '$'    
+    newline db 0Dh, 0Ah, '$'
+    
+    mensaje_cargando db 'Cargando...', 0Dh, 0Ah, '$'    
     
     ; NO TOCAR
     navio_1 dw 4434h, 4435h, 4436h, 4432h, 4532h, 4632h, 4231h, 4232h, 4233h, 4234h, 4235h
@@ -53,7 +57,10 @@ intentar db ?
                db 6 dup(?)
                db 6 dup(?)
                db 6 dup(?)
-               db 6 dup(?)
+               db 6 dup(?) 
+               
+    encabezado_col db '  A B C D E F', 0Dh, 0Ah, '$'
+               
 
 .code
 main proc
@@ -66,6 +73,9 @@ main proc
 ; --------------------------------------------------------------------------------------------------    
     
     start:
+    lea dx, mensaje_cargando 
+    mov ah, 09h
+    int 21h
 
     ; Llamar a la subrutina para seleccionar aleatoriamente un navio
     call seleccionar_navio_aleatorio
@@ -96,7 +106,7 @@ main proc
         loop navio_loop
         
         ; no encontrado en navios
-        mov [si], 0
+        mov [si], -48
         jmp siguiente
     
     encontrado:
@@ -109,18 +119,32 @@ main proc
         pop cx
         loop columna_loop
         
-        lea dx, newline
-        mov ah, 09h
-        int 21h
-        
         pop cx
         loop fila_loop
+        
+        lea dx, encabezado_col
+        mov ah, 09h
+        int 21h
         
         ; imprimir mapa_print
         lea si, mapa_print
         mov cx, 6
+          
+        
     
-    imprimir_fila_loop:
+    imprimir_fila_loop:        
+        mov dh, n_fila
+        mov dl, dh        
+        mov ah, 02h
+        int 21h
+        
+        inc n_fila
+        
+              
+        mov dl, ' '
+        mov ah, 02h
+        int 21h
+    
         push cx
         mov cx, 6
         
@@ -218,7 +242,8 @@ main proc
 ; ----------------------------- LOGICA DEL ATAQUES  ------------------------------------------------
 ; --------------------------------------------------------------------------------------------------    
     
-    logica:
+    logica: 
+    mov n_fila, 31h
     mov bx, 00000h
     mov cx, 00000h
     mov dx, 00000h
@@ -277,6 +302,10 @@ main proc
         mov ah, 01h
         int 21h
         mov fila, al
+        
+        ; verificar ctrl+e
+        cmp columna, 05h
+        jz fin
         
         ;verificar si los valores se encuentran en los rangos correctos
         cmp columna, 0h
