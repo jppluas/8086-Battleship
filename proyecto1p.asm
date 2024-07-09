@@ -18,11 +18,11 @@
     fila db ?
     columna db ? 
     celda_ingresada dw ?
-    ataques_prueba db 0,0,0,0,0,0,0,0,0,0,0 
+    celdas_atacadas db 0,0,0,0,0,0,0,0,0,0,0 
     mapa_size db 11
-    barco_1 db 1 
-    barco_2 db 1 
-    barco_3 db 1
+    is_subamarino_vivo db 1 
+    is_destructor_vivo db 1 
+    is_portaviones_vivo db 1
     barco_size db ? 
     num dw 0 
     intentar db ?
@@ -30,7 +30,7 @@
     n_fila db 31h
 
     ; NO TOCAR
-    mapa_1 dw 4131h, 4231h, 4331h, 4431h, 4531h, 4631h
+    tablero_base dw 4131h, 4231h, 4331h, 4431h, 4531h, 4631h
            dw 4132h, 4232h, 4332h, 4432h, 4532h, 4632h
            dw 4133h, 4233h, 4333h, 4433h, 4533h, 4633h
            dw 4134h, 4234h, 4334h, 4434h, 4534h, 4634h
@@ -42,15 +42,15 @@
     mensaje_cargando db 0Dh, 0Ah, 'Cargando...', 0Dh, 0Ah, '$'    
     
     ; NO TOCAR
-    navio_1 dw 4434h, 4435h, 4436h, 4432h, 4532h, 4632h, 4231h, 4232h, 4233h, 4234h, 4235h
-    navio_2 dw 4132h, 4133h, 4134h, 4333h, 4433h, 4533h, 4236h, 4336h, 4436h, 4536h, 4636h
-    navio_3 dw 4531h, 4532h, 4533h, 4634h, 4635h, 4636h, 4134h, 4234h, 4334h, 4434h, 4534h
-    navio_4 dw 4132h, 4232h, 4332h, 4234h, 4235h, 4236h, 4431h, 4432h, 4433h, 4434h, 4434h
-    navio_5 dw 4236h, 4336h, 4436h, 4533h, 4534h, 4535h, 4131h, 4231h, 4331h, 4431h, 4531h
-    navio_6 dw 4231h, 4232h, 4233h, 4433h, 4434h, 4435h, 4631h, 4632h, 4633h, 4634h, 4635h
-    navio_7 dw 4435h, 4535h, 4635h, 4234h, 4235h, 4236h, 4133h, 4233h, 4333h, 4433h, 4533h
+    mapa_1 dw 4434h, 4435h, 4436h, 4432h, 4532h, 4632h, 4231h, 4232h, 4233h, 4234h, 4235h
+    mapa_2 dw 4132h, 4133h, 4134h, 4333h, 4433h, 4533h, 4236h, 4336h, 4436h, 4536h, 4636h
+    mapa_3 dw 4531h, 4532h, 4533h, 4634h, 4635h, 4636h, 4134h, 4234h, 4334h, 4434h, 4534h
+    mapa_4 dw 4132h, 4232h, 4332h, 4234h, 4235h, 4236h, 4431h, 4432h, 4433h, 4434h, 4434h
+    mapa_5 dw 4236h, 4336h, 4436h, 4533h, 4534h, 4535h, 4131h, 4231h, 4331h, 4431h, 4531h
+    mapa_6 dw 4231h, 4232h, 4233h, 4433h, 4434h, 4435h, 4631h, 4632h, 4633h, 4634h, 4635h
+    mapa_7 dw 4435h, 4535h, 4635h, 4234h, 4235h, 4236h, 4133h, 4233h, 4333h, 4433h, 4533h
     
-    navio dw 11 dup(?)
+    mapa_en_juego dw 11 dup(?)
        
     mapa_print db 6 dup(?)
                db 6 dup(?)
@@ -61,7 +61,7 @@
                
     encabezado_col db 0Dh, 0Ah,'  A B C D E F', 0Dh, 0Ah, '$' 
     juego db 0Dh, 0Ah,'BATALLA NAVAL', '$'
-    condicion db db 0Dh, 0Ah,'Tienes 18 misiles para destruit la flota enemiga', '$'           
+    condicion db db 0Dh, 0Ah,'Tienes 18 misiles para destruir la flota enemiga', '$'           
 
 .code
 main proc
@@ -86,14 +86,14 @@ main proc
     mov ah, 09h
     int 21h
 
-    ; Llamar a la subrutina para seleccionar aleatoriamente un navio
+    ; Llamar a la subrutina para seleccionar aleatoriamente un mapa_en_juego
     call seleccionar_navio_aleatorio
 
     ; Inicializar el puntero al mapa a imprimir
     lea si, mapa_print
 
-    ; Recorrer el mapa_1
-    lea di, mapa_1
+    ; Recorrer el tablero_base
+    lea di, tablero_base
     mov cx, 6    ; número de filas
     mov bx, 6    ; número de columnas
 
@@ -103,9 +103,9 @@ main proc
     
     columna_loop: 
         push cx
-        mov dx, [di] ; cargar el valor de mapa_1
-        push di      ; guarda la direccion de mapa_1
-        lea di, navio
+        mov dx, [di] ; cargar el valor de tablero_base
+        push di      ; guarda la direccion de tablero_base
+        lea di, mapa_en_juego
         mov cx, 11   ; número de elementos en navios
         
     navio_loop:
@@ -177,7 +177,7 @@ main proc
     
         jmp logica
     
-    ; Subrutina para seleccionar aleatoriamente un navio
+    ; Subrutina para seleccionar aleatoriamente un mapa_en_juego
     seleccionar_navio_aleatorio:
         ; Generar un número aleatorio entre 0 y 6
         mov ah, 2Ch          ; Interrupción del reloj del sistema
@@ -191,49 +191,49 @@ main proc
     
         ; Seleccionar el arreglo de navíos correspondiente
         cmp al, 0
-        je copiar_navio_1
+        je copiar_mapa_1
         cmp al, 1
-        je copiar_navio_2
+        je copiar_mapa_2
         cmp al, 2
-        je copiar_navio_3
+        je copiar_mapa_3
         cmp al, 3
-        je copiar_navio_4
+        je copiar_mapa_4
         cmp al, 4
-        je copiar_navio_5
+        je copiar_mapa_5
         cmp al, 5
-        je copiar_navio_6
+        je copiar_mapa_6
         cmp al, 6
-        je copiar_navio_7
+        je copiar_mapa_7
     
-    copiar_navio_1:
-        lea si, navio_1
+    copiar_mapa_1:
+        lea si, mapa_1
         jmp copiar
     
-    copiar_navio_2:
-        lea si, navio_2
+    copiar_mapa_2:
+        lea si, mapa_2
         jmp copiar
     
-    copiar_navio_3:
-        lea si, navio_3
+    copiar_mapa_3:
+        lea si, mapa_3
         jmp copiar
     
-    copiar_navio_4:
-        lea si, navio_4
+    copiar_mapa_4:
+        lea si, mapa_4
         jmp copiar
     
-    copiar_navio_5:
-        lea si, navio_5
+    copiar_mapa_5:
+        lea si, mapa_5
         jmp copiar
     
-    copiar_navio_6:
-        lea si, navio_6
+    copiar_mapa_6:
+        lea si, mapa_6
     
-    copiar_navio_7:
-        lea si, navio_7
+    copiar_mapa_7:
+        lea si, mapa_7
     
     copiar:
-        ; Copiar el arreglo seleccionado a navio
-        lea di, navio
+        ; Copiar el arreglo seleccionado a mapa_en_juego
+        lea di, mapa_en_juego
         mov cx, 11
     copiar_navio:
         mov ax, [si]
@@ -254,15 +254,17 @@ main proc
     mov dx, 00000h
     mov ch, 1   ; inicializamos el numero de intento 
 
-    ; Mostrar el mensaje     
+     ; Imprime el mensaje de ingreso en 3 partes    
     ingreso:
         mov cl, 00h
-        lea dx, msg_misil
+        lea dx, msg_misil   ;Imprime la palabra Misil
         mov ah, 09h
         int 21h
-        mov ah, 00h
-        mov al, ch
         
+        mov ah, 00h
+        mov al, ch          ;Mueve el numero de misil actual al registro para imprimirlo
+        
+    ; Cuando el numero de misil tenga 2 digitos, realiza las operaciones necesarias para mostrarlo
     convertir:
         mov bl, 10   ;mueve 10 a bl
         div bl       ;divide el contenido de ax para 10, el cociente se guarda en al y el residuo en ah
@@ -276,9 +278,6 @@ main proc
         add cl, 1
         cmp dl, 0    ;verifica si el cociente es 0
         jnz convertir;si no se cumple lo anterior regresa a la etiqueta convertir
-        mov ah, 02h  ;esta linea y las 2 siguientes son para dejar un espacio entre cada numero
-        mov dl, 0h
-        int 21h
         jz  mostrar  ;si dl es igual a 0 salta a la etiqueta mostrar
                                
     mostrar:
@@ -287,6 +286,9 @@ main proc
         mov ah, 02h  ;se coloca 02h en ah (funcion)
         mov dl, al   ;se guarda el contenido de al en dl
         add dl, 30h  ;se suma 30h a dl para obtener el caracter ascii correcto
+        int 21h
+          ;esta linea y las 2 siguientes son para dejar un espacio entre cada numero
+        mov dl, 0h
         int 21h      ;se llama a interrupcion 21h para mostrar el caracter por pantalla
         cmp cl, 0    ;verifica si el contador llego a 0
         jnz mostrar  ;si lo anterior no se cumple, salta a la etiqueta mostrar
@@ -294,104 +296,101 @@ main proc
         
         
         
-        lea dx, msg_misil_2
+        lea dx, msg_misil_2    ;Imprime el resto del mensaje de ingreso de celda
         mov ah, 09h
         int 21h 
         
         ; Lee la columna ingresada por el usuario
         mov ah, 01h
         int 21h
-        mov columna, al
+        
+        ; verificar interrupcion con ctrl+e
+        cmp al, 05h       ; en caso de leer el ascii de ctrl+e, salta a la etiqueta fin
+        jz fin 
+        
+        mov columna, al   ;guarda el valor ingresado en la variable columna
         
         ; Lee la fila ingresada
         mov ah, 01h
         int 21h
-        mov fila, al
-        
-        ; verificar ctrl+e
-        cmp columna, 05h
+        ; verificar interrupcion con ctrl+e
+        cmp al, 05h       ; en caso de leer el ascii de ctrl+e, salta a la etiqueta fin
         jz fin
+        mov fila, al      ;guarda el valor ingresado en la variable fila
         
-        ;verificar si los valores se encuentran en los rangos correctos
-        cmp columna, 0h
-        je incorrecto 
-        cmp fila, 0h
-        je incorrecto
-        
-         
-        cmp columna, 41h
-        jb incorrecto
-        cmp columna, 46h
+        ; verifica si lo ingresado en la columna se encuentra entre la A y la F 
+        cmp columna, 41h    
+        jb incorrecto         
+        cmp columna, 46h   
         ja incorrecto  
         
+        ; verifica si lo ingresado en la fila se encuentra entre el 1 y el 6 
         cmp fila, 31h  
         jb incorrecto
         cmp fila, 36h
         ja incorrecto 
         
-        jmp correcto  
+        jmp correcto    ; si la celda es valida, pasa al siguiente paso
         
     incorrecto:
-        lea dx, msg_incorrecto
+        lea dx, msg_incorrecto    ; muestra un mensaje indicando que lo ingresado no cumple el formato
         mov ah, 09h
         int 21h
-        jmp ingreso   
+        jmp ingreso               ; pide que ingrese otra celda
         
         
     correcto:
         mov dx, 00000h
-        mov dh, columna
-        add dl, fila
-        mov celda_ingresada, dx        ; obtener el valor total de la celda
+        mov dh, columna           
+        mov dl, fila
+        mov celda_ingresada, dx   ; obtiene el valor total de la celda y lo guarda en variable    
 
     verificar_ataque:
-        mov si, offset navio     ; inicializar indice para recorrer el array de navios
-        mov di, offset ataques_prueba  ; inicializar indice para recorrer el array de ataques
-        mov bh, mapa_size 
+        mov si, offset mapa_en_juego    ; inicializar indice para recorrer el array de posiciones de barcos
+        mov di, offset celdas_atacadas  ; inicializar indice para recorrer el array de las celdas atacadas
+        mov bh, mapa_size               ; indica el numero de celdas cque tienen barcos para controlar iteracion
     
-    comparar: 
-        cmp bh, 00h
-        jz rechazar_ataque  
-        dec bh
-        mov ax, [si]
+    comparar:                           ; verifica si se ha recorrido todo el array de posiciones
+        cmp bh, 00h                     ; es decir, que no se encontró ninguna coincidencia y rechaza el ataque
+        jz rechazar_ataque              ; decrementa el numero de posiciones por recorrer del array
+        dec bh                          
         
-        cmp [si], dx
+        cmp [si], dx                    ; verifica si la celda ingresada coincide con el elemento de la posicion actual del array
         
-        jz verif
-        jnz control_indices
-        
-        jmp rechazar_ataque    
+        jz verif                        ; si es el caso, verifico si no se ha atacado antes
+        jnz control_indices             ; si no es el caso, voy al siguiente indice
+                                
     
-    control_indices:
-        add si,2
-        inc di
-        jmp comparar          
+    control_indices:                    
+        add si,2                        ; incremento en 2 el indice de las posiciones porque son de tipo word
+        inc di                          ; incremento en 1 el indice de las celdas atacadas porque son tipo byte 
+        jmp comparar                    ; itero sobre el array 
     
     verif:
-        cmp [di], 01h
-        jz omitir_ataque
-        jnz ataque
+        cmp [di], 01h                   ; verifico si esa celda ya ha sido atacada antes, es decir la lista paralela guarde 1 en esa posicion
+        jz omitir_ataque                ; si es el caso, omito el ataque y pido una nueva celda
+        jnz ataque                      ; si no es el caso, procedo a guardar el ataque
     
     ataque:
-        mov [di], 01h
-        jmp confirmar_ataque
+        mov [di], 01h                   ; asigno 1 en las celdas atacadas correspondiente a que la celda fue impactada
+        jmp confirmar_ataque            ; imprimo el mensaje de confirmación de ataque
        
-    pre_verif_barcos_1:
-        mov di, offset ataques_prueba
+    verif_submarino_hundido:
+        mov di, offset celdas_atacadas   ; inicializar indice para recorrer el array de posiciones de barcos 
         mov barco_size, 3
         mov bl, barco_size
-        cmp barco_1, 01h
-        jnz pre_verif_barcos_2
+        cmp is_subamarino_vivo, 01h
+        jnz verif_destructor_hundido
     
-    lup_1:
+    verif_celdas_submarino:
         cmp [di], 01h 
-        jnz pre_verif_barcos_2
+        jnz verif_destructor_hundido
         inc di
         dec bl
         cmp bl, 00h            
-        jnz lup_1
+        jnz verif_celdas_submarino
         
-        mov barco_1, bl
+        mov is_subamarino_vivo, bl
         lea dx, msg_submarino
         mov ah, 09h
         int 21h 
@@ -399,23 +398,23 @@ main proc
         jmp verif_victoria_1
         
         
-     pre_verif_barcos_2:
-        mov di, offset ataques_prueba 
+     verif_destructor_hundido:
+        mov di, offset celdas_atacadas 
         mov barco_size, 3
         mov bl, barco_size
         add di, 3
-        cmp barco_2, 01h
-        jnz pre_verif_barcos_3
+        cmp is_destructor_vivo, 01h
+        jnz verif_portaviones_hundido
      
-     lup_2:
+     verif_celdas_destructor:
         cmp [di], 01h 
-        jnz pre_verif_barcos_3
+        jnz verif_portaviones_hundido
         inc di
         dec bl
         cmp bl, 00h
-        jnz lup_2
+        jnz verif_celdas_destructor
         
-        mov barco_2, 00h
+        mov is_destructor_vivo, 00h
         lea dx, msg_destructor
         mov ah, 09h
         int 21h
@@ -423,40 +422,40 @@ main proc
         jmp verif_victoria_1
          
         
-    pre_verif_barcos_3:
-        mov di, offset ataques_prueba 
+    verif_portaviones_hundido:
+        mov di, offset celdas_atacadas 
         mov barco_size, 5
         mov bl, barco_size
         add di, 6
-        cmp barco_3, 01h
+        cmp is_portaviones_vivo, 01h
         jnz verif_victoria_1 
         
-    lup_3:
+    verif_celdas_portaviones:
         cmp [di], 01h 
         jnz ingreso
         inc di
         dec bl
         cmp bl, 00h
-        jnz lup_3
+        jnz verif_celdas_portaviones
         
-        mov barco_3, 00h
+        mov is_portaviones_vivo, 00h
         lea dx, msg_portaviones
         mov ah, 09h
         int 21h
         
     
     verif_victoria_1:
-        cmp barco_1, 00h
+        cmp is_subamarino_vivo, 00h
         jz verif_victoria_2
         jnz ingreso
          
     verif_victoria_2:
-        cmp barco_2, 00h
+        cmp is_destructor_vivo, 00h
         jz verif_victoria_3
         jnz ingreso
         
     verif_victoria_3:
-        cmp barco_3, 00h
+        cmp is_portaviones_vivo, 00h
         jnz ingreso 
     
     victoria:
@@ -584,7 +583,7 @@ main proc
         
         cmp ch, 19
         jz derrota           
-        jnz  pre_verif_barcos_1
+        jnz  verif_submarino_hundido
         
         
     omitir_ataque:
@@ -608,6 +607,9 @@ main proc
         ; Lee la columna ingresada por el usuario
         mov ah, 01h
         int 21h
+        ; verificar interrupcion con ctrl+e
+        cmp al, 05h       ; en caso de leer el ascii de ctrl+e, salta a la etiqueta fin
+        jz fin
         mov intentar, al
         
         mov ax, @data
