@@ -3,12 +3,12 @@
 .data 
     msg_intentar db 0Dh, 0Ah, 0Dh, 0Ah, 'Desea jugar de nuevo? Si(1)/No(0) $'
     msg_misil db 0Dh, 0Ah,'Misil $'
-    msg_misil_2 db ', ingrese la celda a atacar (A-F)(1-6): $'      
+    msg_misil_2 db ', ingrese la celda a atacar: $'      
     msg_incorrecto db 0Dh, 0Ah, 'Ingrese una celda valida Ej. C4$'
     msg_incorrecto_2 db 0Dh, 0Ah, 'Ingrese una opcion valida$' 
     msg_incorrecto_enter db 0Dh, 0Ah, 'No es necesario presionar ENTER$' 
     msg_victoria db 0Dh, 0Ah,'Ganaste! ;)$'
-    msg_derrota db 0Dh, 0Ah, 0Dh, 0Ah, 'Mejor suerte para la proxima! ;)$',0Dh, 0Ah
+    msg_derrota db 0Dh, 0Ah, 0Dh, 0Ah, 'Mejor suerte para la proxima! ;)',0Dh, 0Ah,  '$' 
     msg_gracias db 0Dh, 0Ah,'Gracias por jugar, vuelve pronto ;)$'
     msg_ataque_confirmado db '..........Impacto confirmado$'
     msg_ataque_fallido db '..........Sin impacto$'
@@ -70,9 +70,8 @@
                
     encabezado_col db 0Dh, 0Ah,'  A B C D E F', 0Dh, 0Ah, '$' 
     juego db 0Dh, 0Ah,'BATALLA NAVAL', '$'
-    condicion db 0Dh, 0Ah,'Tienes 18 misiles para destruir la flota enemiga', '$'
-    condicion_2 db 0Dh, 0Ah, 'Presiona ENTER para visualizar el tablero y ubicar los barcos aleatoriamente ...', '$'            
-
+    condicion db 0Dh, 0Ah,'Tienes 18 misiles para destruir la flota enemiga', 0Dh, 0Ah, 'Presiona ENTER para visualizar el tablero y ubicar los barcos aleatoriamente ...$'            
+    barcos db  0Dh, 0Ah,'Flota: Submarino (3 celdas)', 0Dh, 0Ah,' Destructor (3 celdas)', 0Dh, 0Ah,' Portaviones (5 celdas), ', 0Dh, 0Ah,'$'
 .code
 main proc
     mov ax, @data
@@ -94,16 +93,16 @@ main proc
     
     lea dx, condicion
     mov ah, 09h
-    int 21h 
-    
-    lea dx, condicion_2
-    mov ah, 09h
     int 21h
     
     mov ah, 01h
     int 21h 
     
     lea dx, mensaje_cargando 
+    mov ah, 09h
+    int 21h 
+    
+    lea dx, barcos
     mov ah, 09h
     int 21h
 
@@ -379,6 +378,7 @@ main proc
         jz incorrecto_enter 
         
         mov fila, al
+        
         
         
         cmp columna, 41h
