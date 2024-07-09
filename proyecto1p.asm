@@ -107,38 +107,16 @@ main proc
         push di      ; guarda la direccion de mapa_1
         lea di, navio
         mov cx, 11   ; número de elementos en navios
-        
-    navio_loop:
-        cmp dx, [di]
-        je encontrado
-        add di, 2
-        loop navio_loop
-        
-        ; no encontrado en navios
-        mov [si], -48
-        jmp siguiente
-    
-    encontrado:
-        mov [si], 1
-        
+            
     siguiente:
-        pop di
-        add di, 2
-        inc si
-        pop cx
-        loop columna_loop
-        
-        pop cx
-        loop fila_loop       
-        
         lea dx, encabezado_col
         mov ah, 09h
         int 21h
         
         ; imprimir mapa_print con '*'
         lea si, mapa_print
-        mov cx, 6
-    
+        mov cx, 6 
+        
     imprimir_fila_loop:        
         mov dh, n_fila
         mov dl, dh        
