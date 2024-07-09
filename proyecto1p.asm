@@ -31,15 +31,18 @@
     guardar_b dw ?
     guardar_c dw ? 
     
+    
     n_fila db 31h
 
     ; NO TOCAR
     tablero_base dw 4131h, 4231h, 4331h, 4431h, 4531h, 4631h
-           dw 4132h, 4232h, 4332h, 4432h, 4532h, 4632h
-           dw 4133h, 4233h, 4333h, 4433h, 4533h, 4633h
-           dw 4134h, 4234h, 4334h, 4434h, 4534h, 4634h
-           dw 4135h, 4235h, 4335h, 4435h, 4535h, 4635h
-           dw 4136h, 4236h, 4336h, 4436h, 4536h, 4636h   
+                   dw 4132h, 4232h, 4332h, 4432h, 4532h, 4632h
+                   dw 4133h, 4233h, 4333h, 4433h, 4533h, 4633h
+                   dw 4134h, 4234h, 4334h, 4434h, 4534h, 4634h
+                   dw 4135h, 4235h, 4335h, 4435h, 4535h, 4635h
+                   dw 4136h, 4236h, 4336h, 4436h, 4536h, 4636h   
+    
+    
                
     newline db 0Dh, 0Ah, '$'
     
@@ -68,7 +71,14 @@
                db 6 dup(?)
     
                
-    encabezado_col db 0Dh, 0Ah,'  A B C D E F', 0Dh, 0Ah, '$' 
+    encabezado_col db 0Dh, 0Ah,'  A B C D E F', 0Dh, 0Ah, '$'
+    f1 db '1 * * * * * *', 0Dh, 0Ah, '$'
+    f2 db '2 * * * * * *', 0Dh, 0Ah, '$'
+    f3 db '3 * * * * * *', 0Dh, 0Ah, '$'
+    f4 db '4 * * * * * *', 0Dh, 0Ah, '$'
+    f5 db '5 * * * * * *', 0Dh, 0Ah, '$'
+    f6 db '6 * * * * * *', 0Dh, 0Ah, '$'
+          
     juego db 0Dh, 0Ah,'BATALLA NAVAL', '$'
     condicion db 0Dh, 0Ah,'Tienes 18 misiles para destruir la flota enemiga', 0Dh, 0Ah, 'Presiona ENTER para visualizar el tablero y ubicar los barcos aleatoriamente ...$'            
     barcos db  0Dh, 0Ah,'Flota: Submarino (3 celdas)', 0Dh, 0Ah,' Destructor (3 celdas)', 0Dh, 0Ah,' Portaviones (5 celdas), ', 0Dh, 0Ah,'$'
@@ -89,7 +99,8 @@ main proc
     mov n_fila, 31h    
     lea dx, juego
     mov ah, 09h
-    int 21h 
+    int 21h
+    
     
     lea dx, condicion
     mov ah, 09h
@@ -273,7 +284,33 @@ main proc
 ; --------------------------------------------------------------------------------------------------    
     
     logica:
+    lea dx, encabezado_col
+    mov ah, 09h
+    int 21h  
     
+    lea dx, f1
+    mov ah, 09h
+    int 21h
+    
+    lea dx, f2
+    mov ah, 09h
+    int 21h 
+    
+    lea dx, f3
+    mov ah, 09h
+    int 21h
+    
+    lea dx, f4
+    mov ah, 09h
+    int 21h 
+    
+    lea dx, f5
+    mov ah, 09h
+    int 21h
+    
+    lea dx, f6
+    mov ah, 09h
+    int 21h
     
     mov n_fila, 31h
    
