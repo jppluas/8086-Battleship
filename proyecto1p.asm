@@ -7,7 +7,7 @@
     msg_incorrecto db 0Dh, 0Ah, 'Ingrese una celda valida (Columna A-F y Fila 1-6)$'
     msg_incorrecto_2 db 0Dh, 0Ah, 'Ingrese una opción valida$'
     msg_victoria db 0Dh, 0Ah,'Ganaste! ;)$'
-    msg_derrota db 0Dh, 0Ah, 0Dh, 0Ah, 'Mejor suerte para la proxima! ;)$'
+    msg_derrota db 0Dh, 0Ah, 0Dh, 0Ah, 'Mejor suerte para la proxima! ;)$',0Dh, 0Ah
     msg_gracias db 0Dh, 0Ah,'Gracias por jugar, vuelve pronto ;)$'
     msg_ataque_confirmado db '..........Impacto confirmado$'
     msg_ataque_fallido db '..........Sin impacto$'
@@ -15,22 +15,25 @@
     msg_destructor db ' ; Destructor hundido!$'
     msg_portaviones db ' ; Portaviones hundido!$'
     msg_ataque_repetido db '..........Ya impactado, intente de nuevo$'
+    msg_cargando_faltantes db 0Dh, 0Ah, 'Cargando barcos faltantes...', 0Dh, 0Ah, '$' 
     fila db ?
     columna db ? 
     celda_ingresada dw ?
-    ataques_prueba db 0,0,0,0,0,0,0,0,0,0,0 
+    celdas_atacadas db 0,0,0,0,0,0,0,0,0,0,0 
     mapa_size db 11
-    barco_1 db 1 
-    barco_2 db 1 
-    barco_3 db 1
+    is_submarino_vivo db 1 
+    is_destructor_vivo db 1 
+    is_portaviones_vivo db 1
     barco_size db ? 
     num dw 0 
     intentar db ?
+    guardar_b dw ?
+    guardar_c dw ? 
     
     n_fila db 31h
 
     ; NO TOCAR
-    mapa_1 dw 4131h, 4231h, 4331h, 4431h, 4531h, 4631h
+    tablero_base dw 4131h, 4231h, 4331h, 4431h, 4531h, 4631h
            dw 4132h, 4232h, 4332h, 4432h, 4532h, 4632h
            dw 4133h, 4233h, 4333h, 4433h, 4533h, 4633h
            dw 4134h, 4234h, 4334h, 4434h, 4534h, 4634h
@@ -42,17 +45,18 @@
     mensaje_cargando db 0Dh, 0Ah, 'Cargando...', 0Dh, 0Ah, '$'    
     
     ; NO TOCAR
-    navio_1 dw 4434h, 4435h, 4436h, 4432h, 4532h, 4632h, 4231h, 4232h, 4233h, 4234h, 4235h
-    navio_2 dw 4132h, 4133h, 4134h, 4333h, 4433h, 4533h, 4236h, 4336h, 4436h, 4536h, 4636h
-    navio_3 dw 4531h, 4532h, 4533h, 4634h, 4635h, 4636h, 4134h, 4234h, 4334h, 4434h, 4534h
-    navio_4 dw 4132h, 4232h, 4332h, 4234h, 4235h, 4236h, 4431h, 4432h, 4433h, 4434h, 4434h
-    navio_5 dw 4236h, 4336h, 4436h, 4533h, 4534h, 4535h, 4131h, 4231h, 4331h, 4431h, 4531h
-    navio_6 dw 4231h, 4232h, 4233h, 4433h, 4434h, 4435h, 4631h, 4632h, 4633h, 4634h, 4635h
-    navio_7 dw 4435h, 4535h, 4635h, 4234h, 4235h, 4236h, 4133h, 4233h, 4333h, 4433h, 4533h
+    mapa_1 dw 4434h, 4435h, 4436h, 4432h, 4532h, 4632h, 4231h, 4232h, 4233h, 4234h, 4235h
+    mapa_2 dw 4132h, 4133h, 4134h, 4333h, 4433h, 4533h, 4236h, 4336h, 4436h, 4536h, 4636h
+    mapa_3 dw 4531h, 4532h, 4533h, 4634h, 4635h, 4636h, 4134h, 4234h, 4334h, 4434h, 4534h
+    mapa_4 dw 4132h, 4232h, 4332h, 4234h, 4235h, 4236h, 4431h, 4432h, 4433h, 4434h, 4434h
+    mapa_5 dw 4236h, 4336h, 4436h, 4533h, 4534h, 4535h, 4131h, 4231h, 4331h, 4431h, 4531h
+    mapa_6 dw 4231h, 4232h, 4233h, 4433h, 4434h, 4435h, 4631h, 4632h, 4633h, 4634h, 4635h
+    mapa_7 dw 4435h, 4535h, 4635h, 4234h, 4235h, 4236h, 4133h, 4233h, 4333h, 4433h, 4533h
     
-    navio_faltante dw 4136h, 4236h, 4336h
+    celdas_no_atacadas dw 11 dup(?)
+    n_celdas_no_atacadas db ?
     
-    navio dw 11 dup(?)
+    mapa_en_juego dw 11 dup(?)
        
     mapa_print db 6 dup(?)
                db 6 dup(?)
@@ -61,12 +65,6 @@
                db 6 dup(?)
                db 6 dup(?)
     
-    mapa_print2 db 6 dup(?)
-                db 6 dup(?)
-                db 6 dup(?)
-                db 6 dup(?)
-                db 6 dup(?)
-                db 6 dup(?) 
                
     encabezado_col db 0Dh, 0Ah,'  A B C D E F', 0Dh, 0Ah, '$' 
     juego db 0Dh, 0Ah,'BATALLA NAVAL', '$'
@@ -96,7 +94,7 @@ main proc
     mov ah, 09h
     int 21h
 
-    ; Llamar a la subrutina para seleccionar aleatoriamente un navio
+    ; Llamar a la subrutina para seleccionar aleatoriamente un mapa_en_juego
     call seleccionar_navio_aleatorio 
     jmp logica
         
@@ -104,8 +102,8 @@ main proc
         ; Inicializar el puntero al mapa a imprimir
         lea si, mapa_print
     
-        ; Recorrer el mapa_1
-        lea di, mapa_1
+        ; Recorrer el tablero_base
+        lea di, tablero_base
         mov cx, 6    ; número de filas
         mov bx, 6    ; número de columnas  
     
@@ -115,10 +113,10 @@ main proc
     
     columna_loop: 
         push cx
-        mov dx, [di] ; cargar el valor de mapa_1
-        push di      ; guarda la direccion de mapa_1
-        lea di, navio_faltante
-        mov cx, 3   ; número de elementos en navios
+        mov dx, [di] ; cargar el valor de tablero_base
+        push di      ; guarda la direccion de tablero_base
+        lea di, celdas_no_atacadas
+        mov cl, n_celdas_no_atacadas   ; número de elementos en navios
         
     navio_loop:
         cmp dx, [di]
@@ -167,7 +165,8 @@ main proc
         push cx
         mov cx, 6
         
-    imprimir_columna_loop:
+    imprimir_columna_loop: 
+    
         mov al, [si]
         add al, 30h   ; convertir el número a su equivalente ASCII
         mov dl, al
@@ -191,7 +190,7 @@ main proc
         jmp exit
         
     
-    ; Subrutina para seleccionar aleatoriamente un navio
+    ; Subrutina para seleccionar aleatoriamente un mapa_en_juego
     seleccionar_navio_aleatorio:
         ; Generar un número aleatorio entre 0 y 6
         mov ah, 2Ch          ; Interrupción del reloj del sistema
@@ -205,49 +204,49 @@ main proc
     
         ; Seleccionar el arreglo de navíos correspondiente
         cmp al, 0
-        je copiar_navio_1
+        je copiar_mapa_1
         cmp al, 1
-        je copiar_navio_2
+        je copiar_mapa_2
         cmp al, 2
-        je copiar_navio_3
+        je copiar_mapa_3
         cmp al, 3
-        je copiar_navio_4
+        je copiar_mapa_4
         cmp al, 4
-        je copiar_navio_5
+        je copiar_mapa_5
         cmp al, 5
-        je copiar_navio_6
+        je copiar_mapa_6
         cmp al, 6
-        je copiar_navio_7
+        je copiar_mapa_7
     
-    copiar_navio_1:
-        lea si, navio_1
+    copiar_mapa_1:
+        lea si, mapa_1
         jmp copiar
     
-    copiar_navio_2:
-        lea si, navio_2
+    copiar_mapa_2:
+        lea si, mapa_2
         jmp copiar
     
-    copiar_navio_3:
-        lea si, navio_3
+    copiar_mapa_3:
+        lea si, mapa_3
         jmp copiar
     
-    copiar_navio_4:
-        lea si, navio_4
+    copiar_mapa_4:
+        lea si, mapa_4
         jmp copiar
     
-    copiar_navio_5:
-        lea si, navio_5
+    copiar_mapa_5:
+        lea si, mapa_5
         jmp copiar
     
-    copiar_navio_6:
-        lea si, navio_6
+    copiar_mapa_6:
+        lea si, mapa_6
     
-    copiar_navio_7:
-        lea si, navio_7
+    copiar_mapa_7:
+        lea si, mapa_7
     
     copiar:
-        ; Copiar el arreglo seleccionado a navio
-        lea di, navio
+        ; Copiar el arreglo seleccionado a mapa_en_juego
+        lea di, mapa_en_juego
         mov cx, 11
     copiar_navio:
         mov ax, [si]
@@ -359,8 +358,8 @@ main proc
         mov celda_ingresada, dx        ; obtener el valor total de la celda
 
     verificar_ataque:
-        mov si, offset navio     ; inicializar indice para recorrer el array de navios
-        mov di, offset ataques_prueba  ; inicializar indice para recorrer el array de ataques
+        mov si, offset mapa_en_juego     ; inicializar indice para recorrer el array de navios
+        mov di, offset celdas_atacadas  ; inicializar indice para recorrer el array de ataques
         mov bh, mapa_size 
     
     comparar: 
@@ -390,22 +389,22 @@ main proc
         mov [di], 01h
         jmp confirmar_ataque
        
-    pre_verif_barcos_1:
-        mov di, offset ataques_prueba
+    verif_hundido_submarino:
+        mov di, offset celdas_atacadas
         mov barco_size, 3
         mov bl, barco_size
-        cmp barco_1, 01h
-        jnz pre_verif_barcos_2
+        cmp is_submarino_vivo, 01h
+        jnz verif_hundido_destructor
     
-    lup_1:
+    verif_celdas_submarino:
         cmp [di], 01h 
-        jnz pre_verif_barcos_2
+        jnz verif_hundido_destructor
         inc di
         dec bl
         cmp bl, 00h            
-        jnz lup_1
+        jnz verif_celdas_submarino
         
-        mov barco_1, bl
+        mov is_submarino_vivo, bl
         lea dx, msg_submarino
         mov ah, 09h
         int 21h 
@@ -413,23 +412,23 @@ main proc
         jmp verif_victoria_1
         
         
-     pre_verif_barcos_2:
-        mov di, offset ataques_prueba 
+     verif_hundido_destructor:
+        mov di, offset celdas_atacadas 
         mov barco_size, 3
         mov bl, barco_size
         add di, 3
-        cmp barco_2, 01h
-        jnz pre_verif_barcos_3
+        cmp is_destructor_vivo, 01h
+        jnz verif_hundido_portaviones
      
-     lup_2:
+     verif_celdas_destructor:
         cmp [di], 01h 
-        jnz pre_verif_barcos_3
+        jnz verif_hundido_portaviones
         inc di
         dec bl
         cmp bl, 00h
-        jnz lup_2
+        jnz verif_celdas_destructor
         
-        mov barco_2, 00h
+        mov is_destructor_vivo, 00h
         lea dx, msg_destructor
         mov ah, 09h
         int 21h
@@ -437,117 +436,110 @@ main proc
         jmp verif_victoria_1
          
         
-    pre_verif_barcos_3:
-        mov di, offset ataques_prueba 
+    verif_hundido_portaviones:
+        mov di, offset celdas_atacadas 
         mov barco_size, 5
         mov bl, barco_size
         add di, 6
-        cmp barco_3, 01h
+        cmp is_portaviones_vivo, 01h
         jnz verif_victoria_1 
         
-    lup_3:
+    verif_celdas_portaviones:
         cmp [di], 01h 
         jnz ingreso
         inc di
         dec bl
         cmp bl, 00h
-        jnz lup_3
+        jnz verif_celdas_portaviones
         
-        mov barco_3, 00h
+        mov is_portaviones_vivo, 00h
         lea dx, msg_portaviones
         mov ah, 09h
         int 21h
         
     
     verif_victoria_1:
-        cmp barco_1, 00h
+        cmp is_submarino_vivo, 00h
         jz verif_victoria_2
         jnz ingreso
          
     verif_victoria_2:
-        cmp barco_2, 00h
+        cmp is_destructor_vivo, 00h
         jz verif_victoria_3
         jnz ingreso
         
     verif_victoria_3:
-        cmp barco_3, 00h
+        cmp is_portaviones_vivo, 00h
         jnz ingreso 
     
     victoria:
         lea dx, msg_victoria
         mov ah, 09h
         int 21h
-
-        ; Mostrar la tabla completa al final
-        lea dx, encabezado_col
-        mov ah, 09h
-        int 21h
-        
-        ; imprimir mapa_print
-        lea si, mapa_print
-        mov cx, 6
-     
-         
-    imprimir_fila_loop_final:        
-        mov dh, n_fila
-        mov dl, dh        
-        mov ah, 02h
-        int 21h
-        
-        inc n_fila
-        
-              
-        mov dl, ' '
-        mov ah, 02h
-        int 21h
-    
-        push cx
-        mov cx, 6
-        
-    imprimir_columna_loop_final:
-        mov al, [si]
-        add al, 30h   ; convertir el número a su equivalente ASCII
-        mov dl, al
-        mov ah, 02h
-        int 21h
-    
-        mov dl, ' '
-        mov ah, 02h
-        int 21h
-    
-        inc si
-        loop imprimir_columna_loop_final
-    
-        lea dx, newline
-        mov ah, 09h
-        int 21h
-    
-        pop cx
-        loop imprimir_fila_loop_final
-
         jmp exit     
     
     derrota:
         lea dx, msg_derrota
         mov ah, 09h
         int 21h
-
-        ; Mostrar la tabla completa al final
-        lea dx, encabezado_col
+        
+        mov dx,0
+        mov si, offset mapa_en_juego     ; inicializar indice para recorrer el array de navios
+        mov di, offset celdas_atacadas  ; inicializar indice para recorrer el array de ataques
+        mov bh, mapa_size 
+    
+    comparar_2: 
+    
+        cmp bh, 00h
+        jz llenar_lista  
+        dec bh
+        
+        mov ax, [si]
+        cmp [di], 0
+        
+        jnz control_indices_2
+        push [si] 
+        add dx, 1       
+    
+    control_indices_2:
+        add si,2
+        inc di
+        jmp comparar_2  
+    
+    llenar_lista: 
+        mov si, offset celdas_no_atacadas     ; inicializar indice para recorrer el array    
+        mov dh, 0
+        
+    lup:
+        cmp dl, 00h
+        jz siguiente_2  
+        dec dl
+        inc dh
+        mov n_celdas_no_atacadas, dh
+        
+        pop bx
+        mov [si], bx
+        add si,2
+        jmp lup    
+        
+    siguiente_2: 
+        lea dx, msg_cargando_faltantes 
         mov ah, 09h
         int 21h
+    
         
         ; imprimir mapa_print
         lea si, mapa_print
-        mov cx, 6
-         
-    call tabla   
-    call fila_loop
-    call columna_loop
-    call navio_loop
-    call imprimir_fila_loop 
-    call imprimir_columna_loop 
+        mov cx, 6 
         
+         
+        call tabla   
+        call fila_loop
+        call columna_loop
+        call navio_loop
+        call imprimir_fila_loop 
+        call imprimir_columna_loop 
+            
     rechazar_ataque:
         inc ch
         lea dx, msg_ataque_fallido
@@ -567,7 +559,7 @@ main proc
         
         cmp ch, 19
         jz derrota           
-        jnz  pre_verif_barcos_1
+        jnz  verif_hundido_submarino
         
         
     omitir_ataque:
@@ -615,4 +607,3 @@ main proc
         int 21h
         
 main endp
-end main
