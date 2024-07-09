@@ -10,13 +10,14 @@
     msg_victoria db 0Dh, 0Ah,'Ganaste! ;)$'
     msg_derrota db 0Dh, 0Ah, 0Dh, 0Ah, 'Mejor suerte para la proxima! ;)',0Dh, 0Ah,  '$' 
     msg_gracias db 0Dh, 0Ah,'Gracias por jugar, vuelve pronto ;)$'
-    msg_ataque_confirmado db '..........Impacto confirmado$'
-    msg_ataque_fallido db '..........Sin impacto$'
+    msg_ataque_confirmado db 'Impacto confirmado$'
+    msg_ataque_fallido db 'Sin impacto$'
     msg_submarino db ' ; Submarino hundido!$'  
     msg_destructor db ' ; Destructor hundido!$'
     msg_portaviones db ' ; Portaviones hundido!$'
-    msg_ataque_repetido db '..........Ya impactado, intente de nuevo$'
-    msg_cargando_faltantes db 0Dh, 0Ah, 'Cargando barcos faltantes...', 0Dh, 0Ah, '$' 
+    msg_ataque_repetido db 'Ya impactado, intente de nuevo$'
+    msg_cargando_faltantes db 0Dh, 0Ah, 'Cargando barcos faltantes...', 0Dh, 0Ah, '$'
+    msg_separador db '..........$' 
     fila db ?
     columna db ? 
     celda_ingresada dw ?
@@ -59,7 +60,8 @@
     
     celdas_no_atacadas dw 11 dup(?)
     n_celdas_no_atacadas db ?
-    celdas_atacadas_total dw 18 dup(?)
+    
+     dw 18 dup(?)
     
     mapa_en_juego dw 11 dup(?)
        
@@ -94,8 +96,6 @@ main proc
     
     start:  
     
-    
-    
     mov n_fila, 31h    
     lea dx, juego
     mov ah, 09h
@@ -111,7 +111,7 @@ main proc
     
     lea dx, mensaje_cargando 
     mov ah, 09h
-    int 21h 
+    int 21h
     
     lea dx, barcos
     mov ah, 09h
@@ -417,7 +417,6 @@ main proc
         mov fila, al
         
         
-        
         cmp columna, 41h
         jb incorrecto
         cmp columna, 46h
@@ -445,6 +444,10 @@ main proc
         
         
     correcto:
+        lea dx, msg_separador 
+        mov ah, 09h
+        int 21h
+        
         mov dx, 00000h
         mov dh, columna
         add dl, fila
