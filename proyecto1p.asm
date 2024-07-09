@@ -50,6 +50,8 @@
     navio_6 dw 4231h, 4232h, 4233h, 4433h, 4434h, 4435h, 4631h, 4632h, 4633h, 4634h, 4635h
     navio_7 dw 4435h, 4535h, 4635h, 4234h, 4235h, 4236h, 4133h, 4233h, 4333h, 4433h, 4533h
     
+    navio_faltante dw 4136h, 4236h, 4336h
+    
     navio dw 11 dup(?)
        
     mapa_print db 6 dup(?)
@@ -57,7 +59,14 @@
                db 6 dup(?)
                db 6 dup(?)
                db 6 dup(?)
-               db 6 dup(?) 
+               db 6 dup(?)
+    
+    mapa_print2 db 6 dup(?)
+                db 6 dup(?)
+                db 6 dup(?)
+                db 6 dup(?)
+                db 6 dup(?)
+                db 6 dup(?) 
                
     encabezado_col db 0Dh, 0Ah,'  A B C D E F', 0Dh, 0Ah, '$' 
     juego db 0Dh, 0Ah,'BATALLA NAVAL', '$'
@@ -67,13 +76,14 @@
 main proc
     mov ax, @data
     mov ds, ax
-    mov es, ax 
+    mov es, ax
     
 ;--------------------------------------------------------------------------------------------------
 ; ----------------------------- UBICACION ALEATORIA DE BARCOS --------------------------------------
 ; --------------------------------------------------------------------------------------------------    
     
-    start:    
+    start:
+    mov n_fila, 31h    
     lea dx, juego
     mov ah, 09h
     int 21h 
@@ -87,16 +97,18 @@ main proc
     int 21h
 
     ; Llamar a la subrutina para seleccionar aleatoriamente un navio
-    call seleccionar_navio_aleatorio
-
-    ; Inicializar el puntero al mapa a imprimir
-    lea si, mapa_print
-
-    ; Recorrer el mapa_1
-    lea di, mapa_1
-    mov cx, 6    ; número de filas
-    mov bx, 6    ; número de columnas
-
+    call seleccionar_navio_aleatorio 
+    jmp logica
+        
+    tabla:
+        ; Inicializar el puntero al mapa a imprimir
+        lea si, mapa_print
+    
+        ; Recorrer el mapa_1
+        lea di, mapa_1
+        mov cx, 6    ; número de filas
+        mov bx, 6    ; número de columnas  
+    
     fila_loop:
         push cx 
         mov cx, bx   ; número de columnas
@@ -105,9 +117,9 @@ main proc
         push cx
         mov dx, [di] ; cargar el valor de mapa_1
         push di      ; guarda la direccion de mapa_1
-        lea di, navio
-        mov cx, 11   ; número de elementos en navios
-          
+        lea di, navio_faltante
+        mov cx, 3   ; número de elementos en navios
+        
     navio_loop:
         cmp dx, [di]
         je encontrado
@@ -137,8 +149,7 @@ main proc
         
         ; imprimir mapa_print con '*'
         lea si, mapa_print
-        mov cx, 6
-    
+        mov cx, 6 
     
     imprimir_fila_loop:        
         mov dh, n_fila
@@ -157,7 +168,8 @@ main proc
         mov cx, 6
         
     imprimir_columna_loop:
-        mov al, '*'
+        mov al, [si]
+        add al, 30h   ; convertir el número a su equivalente ASCII
         mov dl, al
         mov ah, 02h
         int 21h
@@ -176,7 +188,8 @@ main proc
         pop cx
         loop imprimir_fila_loop
     
-        jmp logica
+        jmp exit
+        
     
     ; Subrutina para seleccionar aleatoriamente un navio
     seleccionar_navio_aleatorio:
@@ -253,7 +266,7 @@ main proc
     mov bx, 00000h
     mov cx, 00000h
     mov dx, 00000h
-    mov ch, 17   ; inicializamos el numero de intento 
+    mov ch, 1   ; inicializamos el numero de intento 
 
     ; Mostrar el mensaje     
     ingreso:
@@ -473,7 +486,8 @@ main proc
         ; imprimir mapa_print
         lea si, mapa_print
         mov cx, 6
-          
+     
+         
     imprimir_fila_loop_final:        
         mov dh, n_fila
         mov dl, dh        
@@ -526,45 +540,13 @@ main proc
         ; imprimir mapa_print
         lea si, mapa_print
         mov cx, 6
-          
-    imprimir_fila_loop_derrota:        
-        mov dh, n_fila
-        mov dl, dh        
-        mov ah, 02h
-        int 21h
-        
-        inc n_fila
-        
-              
-        mov dl, ' '
-        mov ah, 02h
-        int 21h
-    
-        push cx
-        mov cx, 6
-        
-    imprimir_columna_loop_derrota:
-        mov al, [si]
-        add al, 30h   ; convertir el número a su equivalente ASCII
-        mov dl, al
-        mov ah, 02h
-        int 21h
-    
-        mov dl, ' '
-        mov ah, 02h
-        int 21h
-    
-        inc si
-        loop imprimir_columna_loop_derrota
-    
-        lea dx, newline
-        mov ah, 09h
-        int 21h
-    
-        pop cx
-        loop imprimir_fila_loop_derrota
-
-        jmp exit        
+         
+    call tabla   
+    call fila_loop
+    call columna_loop
+    call navio_loop
+    call imprimir_fila_loop 
+    call imprimir_columna_loop 
         
     rechazar_ataque:
         inc ch
