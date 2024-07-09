@@ -80,7 +80,10 @@ main proc
 ; ----------------------------- UBICACION ALEATORIA DE BARCOS --------------------------------------
 ; --------------------------------------------------------------------------------------------------    
     
-    start:
+    start:  
+    
+    
+    
     mov n_fila, 31h    
     lea dx, juego
     mov ah, 09h
@@ -260,8 +263,11 @@ main proc
 ; ----------------------------- LOGICA DEL ATAQUES  ------------------------------------------------
 ; --------------------------------------------------------------------------------------------------    
     
-    logica: 
+    logica:
+    
+    
     mov n_fila, 31h
+   
     mov bx, 00000h
     mov cx, 00000h
     mov dx, 00000h
@@ -270,12 +276,13 @@ main proc
     ; Mostrar el mensaje     
     ingreso:
         mov cl, 00h
-        lea dx, msg_misil
+        lea dx, msg_misil   ;Imprime la palabra Misil
         mov ah, 09h
         int 21h
-        mov ah, 00h
+        mov ah, 00h         ;Mueve el numero de misil actual al registro para imprimirlo
         mov al, ch
         
+     ; Cuando el numero de misil tenga 2 digitos, realiza las operaciones necesarias para mostrarlo
     convertir:
         mov bl, 10   ;mueve 10 a bl
         div bl       ;divide el contenido de ax para 10, el cociente se guarda en al y el residuo en ah
@@ -314,33 +321,42 @@ main proc
         ; Lee la columna ingresada por el usuario
         mov ah, 01h
         int 21h
+        
+        ; verificar ctrl+e
+        cmp al, 05h
+        jz fin  
+        
+        ; verificar enter
+        cmp al, 0Dh
+        jz incorrecto
+        
+        cmp al, 41h
+        jb incorrecto
+        cmp al, 46h
+        ja incorrecto  
+        
+        
         mov columna, al
+        
         
         ; Lee la fila ingresada
         mov ah, 01h
         int 21h
-        mov fila, al
         
         ; verificar ctrl+e
-        cmp columna, 05h
-        jz fin
+        cmp al, 05h
+        jz fin  
         
-        ;verificar si los valores se encuentran en los rangos correctos
-        cmp columna, 0h
-        je incorrecto 
-        cmp fila, 0h
-        je incorrecto
+        ; verificar enter
+        cmp al, 0Dh
+        jz incorrecto
         
-         
-        cmp columna, 41h
+        cmp al, 31h  
         jb incorrecto
-        cmp columna, 46h
-        ja incorrecto  
+        cmp al, 36h
+        ja incorrecto
         
-        cmp fila, 31h  
-        jb incorrecto
-        cmp fila, 36h
-        ja incorrecto 
+        mov fila, al 
         
         jmp correcto  
         
@@ -502,6 +518,7 @@ main proc
         add dx, 1       
     
     control_indices_2:
+        mov [di], 0
         add si,2
         inc di
         jmp comparar_2  
@@ -583,17 +600,25 @@ main proc
         ; Lee la columna ingresada por el usuario
         mov ah, 01h
         int 21h
+        
+        ; verificar ctrl+e
+        cmp al, 05h
+        jz fin  
+        
+        ; verificar enter
+        cmp al, 0Dh
+        jz incorrecto_2
+        
+        cmp al, 30h
+        jb incorrecto_2
+        cmp al, 31h
+        ja incorrecto_2
+        
         mov intentar, al
         
         mov ax, @data
         mov ds, ax
-        mov es, ax 
-        
-        ;verificar la opcion seleccionada
-        cmp intentar, 30h
-        jb incorrecto_2
-        cmp intentar, 31h
-        ja incorrecto_2
+        mov es, ax   
         
         cmp intentar, 30h  
         jnz start
