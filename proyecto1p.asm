@@ -3,9 +3,10 @@
 .data 
     msg_intentar db 0Dh, 0Ah, 0Dh, 0Ah, 'Desea jugar de nuevo? Si(1)/No(0) $'
     msg_misil db 0Dh, 0Ah,'Misil $'
-    msg_misil_2 db ', ingrese la celda a atacar: $'      
-    msg_incorrecto db 0Dh, 0Ah, 'Ingrese una celda valida (Columna A-F y Fila 1-6)$'
-    msg_incorrecto_2 db 0Dh, 0Ah, 'Ingrese una opción valida$'
+    msg_misil_2 db ', ingrese la celda a atacar (A-F)(1-6): $'      
+    msg_incorrecto db 0Dh, 0Ah, 'Ingrese una celda valida Ej. C4$'
+    msg_incorrecto_2 db 0Dh, 0Ah, 'Ingrese una opcion valida$' 
+    msg_incorrecto_enter db 0Dh, 0Ah, 'No es necesario presionar ENTER$' 
     msg_victoria db 0Dh, 0Ah,'Ganaste! ;)$'
     msg_derrota db 0Dh, 0Ah, 0Dh, 0Ah, 'Mejor suerte para la proxima! ;)$',0Dh, 0Ah
     msg_gracias db 0Dh, 0Ah,'Gracias por jugar, vuelve pronto ;)$'
@@ -55,6 +56,7 @@
     
     celdas_no_atacadas dw 11 dup(?)
     n_celdas_no_atacadas db ?
+    celdas_atacadas_total dw 18 dup(?)
     
     mapa_en_juego dw 11 dup(?)
        
@@ -68,7 +70,8 @@
                
     encabezado_col db 0Dh, 0Ah,'  A B C D E F', 0Dh, 0Ah, '$' 
     juego db 0Dh, 0Ah,'BATALLA NAVAL', '$'
-    condicion db db 0Dh, 0Ah,'Tienes 18 misiles para destruit la flota enemiga', '$'           
+    condicion db 0Dh, 0Ah,'Tienes 18 misiles para destruir la flota enemiga', '$'
+    condicion_2 db 0Dh, 0Ah, 'Presiona ENTER para visualizar el tablero y ubicar los barcos aleatoriamente ...', '$'            
 
 .code
 main proc
@@ -91,6 +94,13 @@ main proc
     
     lea dx, condicion
     mov ah, 09h
+    int 21h 
+    
+    lea dx, condicion_2
+    mov ah, 09h
+    int 21h
+    
+    mov ah, 01h
     int 21h 
     
     lea dx, mensaje_cargando 
@@ -313,55 +323,85 @@ main proc
         mov ah,00h 
         
         
-        
         lea dx, msg_misil_2
         mov ah, 09h
-        int 21h 
-        
+        int 21h
+       
+        pedir_columna:
         ; Lee la columna ingresada por el usuario
         mov ah, 01h
-        int 21h
+        int 21h 
         
+        cmp al, 08h
+        jnz  verficaciones_columna
+        
+        devolver_carro_columna:
+        mov dl, 20h
+        mov ah, 02h
+        int 21h
+        jmp pedir_columna
+        
+        verficaciones_columna:
         ; verificar ctrl+e
         cmp al, 05h
         jz fin  
         
         ; verificar enter
         cmp al, 0Dh
-        jz incorrecto
-        
-        cmp al, 41h
-        jb incorrecto
-        cmp al, 46h
-        ja incorrecto  
-        
+        jz incorrecto_enter
         
         mov columna, al
         
-        
+        pedir_fila:
         ; Lee la fila ingresada
         mov ah, 01h
         int 21h
         
+        ; verificar backspace
+        cmp al, 08h
+        jnz  verficaciones_fila
+        
+        devolver_carro_fila:
+        mov dl, 20h
+        mov ah, 02h
+        int 21h
+        mov dl, 08h
+        int 21h
+        jmp pedir_columna
+        
+        verficaciones_fila:
         ; verificar ctrl+e
         cmp al, 05h
         jz fin  
         
         ; verificar enter
         cmp al, 0Dh
-        jz incorrecto
+        jz incorrecto_enter 
         
-        cmp al, 31h  
+        mov fila, al
+        
+        
+        cmp columna, 41h
         jb incorrecto
-        cmp al, 36h
+        cmp columna, 46h
         ja incorrecto
         
-        mov fila, al 
+        cmp fila, 31h  
+        jb incorrecto
+        cmp fila, 36h
+        ja incorrecto
+         
         
         jmp correcto  
         
     incorrecto:
         lea dx, msg_incorrecto
+        mov ah, 09h
+        int 21h
+        jmp ingreso
+        
+    incorrecto_enter:
+        lea dx, msg_incorrecto_enter
         mov ah, 09h
         int 21h
         jmp ingreso   
@@ -589,7 +629,13 @@ main proc
         lea dx, msg_incorrecto_2
         mov ah, 09h
         int 21h
-        jmp exit  
+        jmp exit
+        
+    incorrecto_enter_2:
+        lea dx, msg_incorrecto_enter
+        mov ah, 09h
+        int 21h
+        jmp exit   
     
     exit: 
     
@@ -607,7 +653,7 @@ main proc
         
         ; verificar enter
         cmp al, 0Dh
-        jz incorrecto_2
+        jz incorrecto_enter_2
         
         cmp al, 30h
         jb incorrecto_2
