@@ -38,7 +38,7 @@
     n_fila db 31h
 
     ; NO TOCAR
-    tablero_base dw 4131h, 4231h, 4331h, 4431h, 4531h, 4631h
+    tablero_base   dw 4131h, 4231h, 4331h, 4431h, 4531h, 4631h
                    dw 4132h, 4232h, 4332h, 4432h, 4532h, 4632h
                    dw 4133h, 4233h, 4333h, 4433h, 4533h, 4633h
                    dw 4134h, 4234h, 4334h, 4434h, 4534h, 4634h
@@ -49,7 +49,7 @@
                
     newline db 0Dh, 0Ah, '$'
     
-    mensaje_cargando db 0Dh, 0Ah, 'Cargando...', 0Dh, 0Ah, '$'    
+    msg_cargando db 0Dh, 0Ah, 'Cargando...', 0Dh, 0Ah, '$'    
     
     ; NO TOCAR
     mapa_1 dw 4434h, 4435h, 4436h, 4432h, 4532h, 4632h, 4231h, 4232h, 4233h, 4234h, 4235h
@@ -99,45 +99,45 @@ main proc
     
     start:
     
+        ; limpiar la pantalla
+        mov ah, 06h       ; Función de desplazamiento de ventana hacia arriba
+        mov al, 0         ; Número de líneas a desplazar, 0 para borrar la pantalla
+        mov bh, 07h       ; Atributo de color (07h es texto blanco sobre fondo negro)
+        mov cx, 0         ; Esquina superior izquierda de la ventana (fila y columna)
+        mov dx, 184Fh     ; Esquina inferior derecha de la ventana (fila 24, columna 79 para 80x25)
+        int 10h           ; Llamada a la interrupción de la BIOS para video
+        
+        ; posicionar el cursor al inicio de la pantalla
+        mov ah, 02h ; posicion cursor
+        mov bh, 00h
+        mov dh, 00h ; fila
+        mov dl, 00h ; columna
+        int 10h  
+        
+        ;mostrar mesajes de bienvenida e indicaciones generales
+        mov n_fila, 31h    
+        lea dx, juego
+        mov ah, 09h
+        int 21h 
+        
+        lea dx, condicion
+        mov ah, 09h
+        int 21h
+        
+        mov ah, 01h
+        int 21h 
+        
+        lea dx, msg_cargando 
+        mov ah, 09h
+        int 21h
+        
+        lea dx, barcos
+        mov ah, 09h
+        int 21h
     
-    mov ah, 06h       ; Función de desplazamiento de ventana hacia arriba
-    mov al, 0         ; Número de líneas a desplazar, 0 para borrar la pantalla
-    mov bh, 07h       ; Atributo de color (07h es texto blanco sobre fondo negro)
-    mov cx, 0         ; Esquina superior izquierda de la ventana (fila y columna)
-    mov dx, 184Fh     ; Esquina inferior derecha de la ventana (fila 24, columna 79 para 80x25)
-    int 10h           ; Llamada a la interrupción de la BIOS para video
-    
-    
-    mov ah, 02h ; posicion cursor
-    mov bh, 00h
-    mov dh, 00h ; fila
-    mov dl, 00h ; columna
-    int 10h  
-    
-    mov n_fila, 31h    
-    lea dx, juego
-    mov ah, 09h
-    int 21h
-    
-    
-    lea dx, condicion
-    mov ah, 09h
-    int 21h
-    
-    mov ah, 01h
-    int 21h 
-    
-    lea dx, mensaje_cargando 
-    mov ah, 09h
-    int 21h
-    
-    lea dx, barcos
-    mov ah, 09h
-    int 21h
-
-    ; Llamar a la subrutina para seleccionar aleatoriamente un mapa_en_juego
-    call seleccionar_navio_aleatorio 
-    jmp logica
+        ; Llamar a la subrutina para seleccionar aleatoriamente un mapa_en_juego
+        call seleccionar_navio_aleatorio 
+        jmp logica
         
     tabla:
         ; Inicializar el puntero al mapa a imprimir
@@ -154,11 +154,12 @@ main proc
     
     columna_loop: 
         push cx
-        mov dx, [di] ; cargar el valor de tablero_base
-        push di      ; guarda la direccion de tablero_base
-        lea di, celdas_no_atacadas
-        mov cl, n_celdas_no_atacadas   ; número de elementos en navios
+        mov dx, [di]                    ; cargar el valor de tablero_base
+        push di                         ; guardar la direccion de tablero_base
+        lea di, celdas_no_atacadas      ; lista de celdas no atacadas
+        mov cl, n_celdas_no_atacadas    ; número celdas no atacadas 
         
+
     navio_loop:
         cmp dx, [di]
         je encontrado
@@ -169,10 +170,10 @@ main proc
         mov [si], -224
         jmp siguiente
     
-    encontrado: ; la posición del navio encontrado en el tablero
+    encontrado:         ; la posición del barco encontrado en el tablero
         mov [si], '1'
         
-    siguiente:  ; si no encuentra, sigue a otro
+    siguiente:          ; si no encuentra, sigue a otro
         pop di
         add di, 2
         inc si
@@ -183,12 +184,14 @@ main proc
         loop fila_loop       
         
         
+        ; guardar estado de registros 
         mov guardar_a, ax
         mov guardar_b, bx
         mov guardar_c, cx
         mov guardar_d, dx
         
         
+        ; limpiar la pantalla
         mov ah, 06h       ; Función de desplazamiento de ventana hacia arriba
         mov al, 0         ; Número de líneas a desplazar, 0 para borrar la pantalla
         mov bh, 07h       ; Atributo de color (07h es texto blanco sobre fondo negro)
@@ -196,28 +199,30 @@ main proc
         mov dx, 184Fh     ; Esquina inferior derecha de la ventana (fila 24, columna 79 para 80x25)
         int 10h           ; Llamada a la interrupción de la BIOS para video
         
-        
+        ; restaurar estado de registros
         mov ax, guardar_a
         mov bx, guardar_b
         mov cx, guardar_c
         mov dx, guardar_d
         
-        
+        ; posicionar el cursor al inicio de la pantalla
         mov ah, 02h ; posicion cursor
         mov bh, 00h
         mov dh, 00h ; fila
         mov dl, 00h ; columna
         int 10h
         
-        
+        ; imprimir encabezado
         lea dx, encabezado_col
         mov ah, 09h
         int 21h
         
+        
         lea si, mapa_print
         mov cx, 6 
     
-    imprimir_fila_loop:; imprime la enumeracion de la fila        
+    ; imprime la enumeracion de la fila
+    imprimir_fila_loop:                 
         mov dh, n_fila
         mov dl, dh        
         mov ah, 02h
@@ -228,16 +233,17 @@ main proc
         push cx
         mov cx, 6 
         
-        mov dl, 02h ; columna
+        mov dl, 02h             ; indicar el numero de columna en que empieza a escribir
         
-    imprimir_columna_loop: ; imprime los valores de la tabla en cada fila
+    imprimir_columna_loop:      ; imprime los valores de la tabla en cada fila
     
+        ; guardar estado de registros
         mov guardar_b, bx
         mov guardar_c, cx
         
-        mov ah, 02h ; posicion cursor
+        mov ah, 02h     ; posiciona el cursor
         mov bh, 00h
-        mov dh, n_fila ; fila
+        mov dh, n_fila  ; indica la posicion de fila en que escriba el caracter
         sub dh, 30h
         int 10h
         
@@ -246,20 +252,21 @@ main proc
         jnz imp
         
         pintar:
-        mov bl, 4Fh ; color
+        mov bl, 4Fh     ; color de sombreado
         
+        ; imprimir el caracter
         imp:   
-        mov ah, 09h ; caracter y atributo
+        mov ah, 09h 
         mov bh, 00h 
-        
-        mov cx, 1   ; veces de escribir
+        mov cx, 1   
         int 10h
         
+        ; restaurar estado de registros
         mov bx, guardar_b 
         mov cx, guardar_c 
         
         
-        add dl, 2
+        add dl, 2        ; colocar un espacio entre caracteres
         inc si
         loop imprimir_columna_loop
     
@@ -347,7 +354,7 @@ main proc
     
     logica:
     
-    ; imprime el modelo del mapa del juego
+    ; imprimir el modelo del mapa del juego
     lea dx, encabezado_col_1
     mov ah, 09h
     int 21h  
@@ -381,7 +388,7 @@ main proc
     mov bx, 00000h
     mov cx, 00000h
     mov dx, 00000h
-    mov ch, 1   ; inicializamos el numero de intento 
+    mov ch, 1   ; inicializar el numero de intento 
 
     ; Mostrar el mensaje     
     ingreso:
@@ -432,6 +439,7 @@ main proc
         mov ah, 01h
         int 21h 
         
+        ;verificar si quiere borrar el caracter
         cmp al, 08h
         jnz  verficaciones_columna
         
@@ -442,11 +450,12 @@ main proc
         jmp pedir_columna
         
         verficaciones_columna:
-        ; verificar ctrl+e
+        
+        ; verificar la interrupcion del programa con ctrl+e
         cmp al, 05h
         jz fin  
         
-        ; verificar enter
+        ; verificar si tecleó enter
         cmp al, 0Dh
         jz incorrecto_enter
         
@@ -455,9 +464,9 @@ main proc
         pedir_fila:
         ; Lee la fila ingresada
         mov ah, 01h
-        int 21h
+        int 21h 
         
-        ; verificar backspace
+        ;verificar si quiere borrar el caracter
         cmp al, 08h
         jnz  verficaciones_fila
         
@@ -470,17 +479,17 @@ main proc
         jmp pedir_columna
         
         verficaciones_fila:
-        ; verificar ctrl+e
+        ; verificar la interrupcion del programa con ctrl+e
         cmp al, 05h
         jz fin  
         
-        ; verificar enter
+        ; verificar si tecleó enter
         cmp al, 0Dh
-        jz incorrecto_enter 
+        jz incorrecto_enter
         
         mov fila, al
         
-        
+        ;verifica si está en los rangos adecuados
         cmp columna, 41h
         jb incorrecto
         cmp columna, 46h
@@ -522,6 +531,7 @@ main proc
         mov di, offset celdas_atacadas  ; inicializar indice para recorrer el array de ataques
         mov bh, mapa_size 
     
+    ;verificar si la celda ingresada se encuentra en la lista de navios
     comparar: 
         cmp bh, 00h
         jz rechazar_ataque  
@@ -540,6 +550,7 @@ main proc
         inc di
         jmp comparar          
     
+    ; verifica si la celda no ha sido atacada ya
     verif:
         cmp [di], 01h
         jz omitir_ataque
@@ -549,6 +560,7 @@ main proc
         mov [di], 01h
         jmp confirmar_ataque
        
+    ;verifica si los barcos no han sido hundidos ya 
     verif_hundido_submarino:
         mov di, offset celdas_atacadas
         mov barco_size, 3
@@ -617,7 +629,7 @@ main proc
         mov ah, 09h
         int 21h
         
-    
+    ; verifica si los barcos no han sido todos hundidos
     verif_victoria_1:
         cmp is_submarino_vivo, 00h
         jz verif_victoria_2
@@ -643,6 +655,7 @@ main proc
         mov ah, 09h
         int 21h
         
+        ; obtener lista de celdas no atacados
         mov dx,0
         mov si, offset mapa_en_juego     ; inicializar indice para recorrer el array de navios
         mov di, offset celdas_atacadas  ; inicializar indice para recorrer el array de ataques
@@ -683,7 +696,7 @@ main proc
         add si,2
         jmp lup    
     
-    ;comienza a imprimir el mapa con los barcos que faltaron atacar 
+    ;comienza a imprimir el mapa con las celdas que faltaron atacar 
     siguiente_2: 
         lea dx, msg_cargando_faltantes 
         mov ah, 09h
@@ -748,15 +761,15 @@ main proc
         mov ah, 09h
         int 21h
         
-        ; Lee la columna ingresada por el usuario
+        ; leer lo ingresado por el usuario
         mov ah, 01h
         int 21h
         
-        ; verificar ctrl+e
+        ; verificar la interrupcion del programa con ctrl+e
         cmp al, 05h
         jz fin  
         
-        ; verificar enter
+        ; verificar si tecleó enter
         cmp al, 0Dh
         jz incorrecto_enter_2
         
@@ -771,9 +784,11 @@ main proc
         mov ds, ax
         mov es, ax   
         
-        cmp intentar, 30h 
+        cmp intentar, 30h      ;verificar la opción ingresada
         jnz start
         
+    
+    ; mostrar mensaje de agradecimiento y fin de programa
     fin:
         lea dx, msg_gracias
         mov ah, 09h
