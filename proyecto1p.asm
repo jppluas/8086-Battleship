@@ -169,10 +169,10 @@ main proc
         mov [si], -224
         jmp siguiente
     
-    encontrado:
+    encontrado: ; la posición del navio encontrado en el tablero
         mov [si], '1'
         
-    siguiente:
+    siguiente:  ; si no encuentra, sigue a otro
         pop di
         add di, 2
         inc si
@@ -217,7 +217,7 @@ main proc
         lea si, mapa_print
         mov cx, 6 
     
-    imprimir_fila_loop:        
+    imprimir_fila_loop:; imprime la enumeracion de la fila        
         mov dh, n_fila
         mov dl, dh        
         mov ah, 02h
@@ -230,7 +230,7 @@ main proc
         
         mov dl, 02h ; columna
         
-    imprimir_columna_loop:
+    imprimir_columna_loop: ; imprime los valores de la tabla en cada fila
     
         mov guardar_b, bx
         mov guardar_c, cx
@@ -300,7 +300,8 @@ main proc
         je copiar_mapa_6
         cmp al, 6
         je copiar_mapa_7
-    
+      
+    ; VALIDACIONES SI SE ESCOGIO DE MANERA ALEATORIA ALGUN MAPA
     copiar_mapa_1:
         lea si, mapa_1
         jmp copiar
@@ -327,10 +328,11 @@ main proc
     copiar_mapa_7:
         lea si, mapa_7
     
-    copiar:
-        ; Copiar el arreglo seleccionado a mapa_en_juego
-        lea di, mapa_en_juego
-        mov cx, 11
+    copiar:           
+        lea di, mapa_en_juego; direcciona el mapa en juego
+        mov cx, 11  
+        
+    ; Copiar el arreglo seleccionado a mapa_en_juego   
     copiar_navio:
         mov ax, [si]
         mov [di], ax
@@ -344,6 +346,8 @@ main proc
 ; --------------------------------------------------------------------------------------------------    
     
     logica:
+    
+    ; imprime el modelo del mapa del juego
     lea dx, encabezado_col_1
     mov ah, 09h
     int 21h  
@@ -678,7 +682,8 @@ main proc
         mov [si], bx
         add si,2
         jmp lup    
-        
+    
+    ;comienza a imprimir el mapa con los barcos que faltaron atacar 
     siguiente_2: 
         lea dx, msg_cargando_faltantes 
         mov ah, 09h
