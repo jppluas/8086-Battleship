@@ -7,7 +7,7 @@
     msg_incorrecto db 0Dh, 0Ah, 'Ingrese una celda valida Ej. C4$'
     msg_incorrecto_2 db 0Dh, 0Ah, 'Ingrese una opcion valida$' 
     msg_incorrecto_enter db 0Dh, 0Ah, 'No es necesario presionar ENTER$' 
-    msg_victoria db 0Dh, 0Ah,'Ganaste! ;)$'
+    msg_victoria db 0Dh, 0Ah, 0Dh, 0Ah,'Ganaste! ;)$'
     msg_derrota db 0Dh, 0Ah, 0Dh, 0Ah, 'Mejor suerte para la proxima! ;)',0Dh, 0Ah,  '$' 
     msg_gracias db 0Dh, 0Ah,'Gracias por jugar, vuelve pronto ;)$'
     msg_ataque_confirmado db 'Impacto confirmado$'
