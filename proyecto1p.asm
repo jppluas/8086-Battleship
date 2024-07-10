@@ -16,8 +16,8 @@
     msg_destructor db ' ; Destructor hundido!$'
     msg_portaviones db ' ; Portaviones hundido!$'
     msg_ataque_repetido db 'Ya impactado, intente de nuevo$'
-    msg_cargando_faltantes db 0Dh, 0Ah, 'Cargando barcos faltantes...', 0Dh, 0Ah, '$'
-    msg_separador db '..........$' 
+    msg_cargando_faltantes db 0Dh, 0Ah, 'Mostrando barcos faltantes...', 0Dh, 0Ah, '$'
+    msg_separador db ' .......... $' 
     fila db ?
     columna db ? 
     celda_ingresada dw ?
@@ -28,9 +28,11 @@
     is_portaviones_vivo db 1
     barco_size db ? 
     num dw 0 
-    intentar db ?
+    intentar db ? 
+    guardar_a dw ?
     guardar_b dw ?
     guardar_c dw ? 
+    guardar_d dw ?
     
     
     n_fila db 31h
@@ -72,8 +74,9 @@
                db 6 dup(?)
                db 6 dup(?)
     
-               
-    encabezado_col db 0Dh, 0Ah,'  A B C D E F', 0Dh, 0Ah, '$'
+    
+    encabezado_col db 0Dh, 0Ah, '   A B C D E F', 0Dh, 0Ah, '$'           
+    encabezado_col_1 db 0Dh, 0Ah,'  A B C D E F', 0Dh, 0Ah, '$'
     f1 db '1 * * * * * *', 0Dh, 0Ah, '$'
     f2 db '2 * * * * * *', 0Dh, 0Ah, '$'
     f3 db '3 * * * * * *', 0Dh, 0Ah, '$'
@@ -94,7 +97,22 @@ main proc
 ; ----------------------------- UBICACION ALEATORIA DE BARCOS --------------------------------------
 ; --------------------------------------------------------------------------------------------------    
     
-    start:  
+    start:
+    
+    
+    mov ah, 06h       ; Función de desplazamiento de ventana hacia arriba
+    mov al, 0         ; Número de líneas a desplazar, 0 para borrar la pantalla
+    mov bh, 07h       ; Atributo de color (07h es texto blanco sobre fondo negro)
+    mov cx, 0         ; Esquina superior izquierda de la ventana (fila y columna)
+    mov dx, 184Fh     ; Esquina inferior derecha de la ventana (fila 24, columna 79 para 80x25)
+    int 10h           ; Llamada a la interrupción de la BIOS para video
+    
+    
+    mov ah, 02h ; posicion cursor
+    mov bh, 00h
+    mov dh, 00h ; fila
+    mov dl, 00h ; columna
+    int 10h  
     
     mov n_fila, 31h    
     lea dx, juego
@@ -148,11 +166,11 @@ main proc
         loop navio_loop
         
         ; no encontrado en navios
-        mov [si], -48
+        mov [si], -224
         jmp siguiente
     
     encontrado:
-        mov [si], 1
+        mov [si], '1'
         
     siguiente:
         pop di
@@ -164,11 +182,38 @@ main proc
         pop cx
         loop fila_loop       
         
+        
+        mov guardar_a, ax
+        mov guardar_b, bx
+        mov guardar_c, cx
+        mov guardar_d, dx
+        
+        
+        mov ah, 06h       ; Función de desplazamiento de ventana hacia arriba
+        mov al, 0         ; Número de líneas a desplazar, 0 para borrar la pantalla
+        mov bh, 07h       ; Atributo de color (07h es texto blanco sobre fondo negro)
+        mov cx, 0         ; Esquina superior izquierda de la ventana (fila y columna)
+        mov dx, 184Fh     ; Esquina inferior derecha de la ventana (fila 24, columna 79 para 80x25)
+        int 10h           ; Llamada a la interrupción de la BIOS para video
+        
+        
+        mov ax, guardar_a
+        mov bx, guardar_b
+        mov cx, guardar_c
+        mov dx, guardar_d
+        
+        
+        mov ah, 02h ; posicion cursor
+        mov bh, 00h
+        mov dh, 00h ; fila
+        mov dl, 00h ; columna
+        int 10h
+        
+        
         lea dx, encabezado_col
         mov ah, 09h
         int 21h
         
-        ; imprimir mapa_print con '*'
         lea si, mapa_print
         mov cx, 6 
     
@@ -179,27 +224,42 @@ main proc
         int 21h
         
         inc n_fila
-        
-              
-        mov dl, ' '
-        mov ah, 02h
-        int 21h
     
         push cx
-        mov cx, 6
+        mov cx, 6 
         
-    imprimir_columna_loop: 
+        mov dl, 02h ; columna
+        
+    imprimir_columna_loop:
     
+        mov guardar_b, bx
+        mov guardar_c, cx
+        
+        mov ah, 02h ; posicion cursor
+        mov bh, 00h
+        mov dh, n_fila ; fila
+        sub dh, 30h
+        int 10h
+        
         mov al, [si]
-        add al, 30h   ; convertir el número a su equivalente ASCII
-        mov dl, al
-        mov ah, 02h
-        int 21h
-    
-        mov dl, ' '
-        mov ah, 02h
-        int 21h
-    
+        cmp al, '1'
+        jnz imp
+        
+        pintar:
+        mov bl, 4Fh ; color
+        
+        imp:   
+        mov ah, 09h ; caracter y atributo
+        mov bh, 00h 
+        
+        mov cx, 1   ; veces de escribir
+        int 10h
+        
+        mov bx, guardar_b 
+        mov cx, guardar_c 
+        
+        
+        add dl, 2
         inc si
         loop imprimir_columna_loop
     
@@ -284,7 +344,7 @@ main proc
 ; --------------------------------------------------------------------------------------------------    
     
     logica:
-    lea dx, encabezado_col
+    lea dx, encabezado_col_1
     mov ah, 09h
     int 21h  
     
@@ -706,7 +766,7 @@ main proc
         mov ds, ax
         mov es, ax   
         
-        cmp intentar, 30h  
+        cmp intentar, 30h 
         jnz start
         
     fin:
